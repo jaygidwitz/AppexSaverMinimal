@@ -187,9 +187,10 @@ final class AppexSaverView: ScreenSaverView {
         guard textLayer == nil, let parentLayer = self.layer else { return }
 
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
 
         let layer = CATextLayer()
-        layer.string = "AppexSaver v\(version)"
+        layer.string = "AppexSaver v\(version) (\(build))"
         layer.fontSize = 24
         layer.font = NSFont.systemFont(ofSize: 24, weight: .medium)
         layer.foregroundColor = NSColor.white.cgColor

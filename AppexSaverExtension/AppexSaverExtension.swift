@@ -15,7 +15,7 @@ import Foundation
 import ScreenSaver
 import os.log
 
-private let logger = Logger(subsystem: "com.glouel.AppexSaver", category: "Extension")
+private let logger = Logger(subsystem: "com.glouel.screensaver.AppexSaver", category: "Extension")
 
 /// Principal class for the screensaver app extension.
 /// Minimal implementation matching Apple's pattern.

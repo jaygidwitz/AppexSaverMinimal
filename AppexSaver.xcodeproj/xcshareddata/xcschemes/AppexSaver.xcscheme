@@ -5,6 +5,24 @@
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "#!/bin/sh&#10;BUILD_NUMBER=`date &apos;+%y%m%d.%H%M&apos;`&#10;echo &quot;CURRENT_PROJECT_VERSION = $BUILD_NUMBER&quot; &gt; &quot;${PROJECT_DIR}/BuildNumber.xcconfig&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "1A00001A000000000000000A"
+                     BuildableName = "AppexSaver.app"
+                     BlueprintName = "AppexSaver"
+                     ReferencedContainer = "container:AppexSaver.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
