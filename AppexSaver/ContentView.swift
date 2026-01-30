@@ -12,6 +12,7 @@ import os.log
 private let logger = Logger(subsystem: "com.glouel.AppexSaver", category: "HostApp")
 
 struct ContentView: View {
+    @Environment(\.openWindow) private var openWindow
     @StateObject private var pluginManager = PluginManager()
     @State private var statusMessage = "Ready"
 
@@ -44,11 +45,18 @@ struct ContentView: View {
                 Divider()
                     .padding(.horizontal, 40)
 
-                // MARK: - System Settings
-                Button("Open Screen Saver Settings") {
-                    openScreenSaverSettings()
+                // MARK: - Actions
+                HStack(spacing: 12) {
+                    Button("Open Preview") {
+                        openWindow(id: "preview")
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Open Screen Saver Settings") {
+                        openScreenSaverSettings()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
 
                 Text(statusMessage)
                     .font(.caption)

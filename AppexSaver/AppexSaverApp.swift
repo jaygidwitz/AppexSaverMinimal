@@ -14,5 +14,11 @@ struct AppexSaverApp: App {
         WindowGroup {
             ContentView()
         }
+
+        Window("Preview", id: "preview") {
+            PreviewViewRepresentable()
+                .ignoresSafeArea()
+        }
+        .defaultSize(width: 640, height: 480)
     }
 }

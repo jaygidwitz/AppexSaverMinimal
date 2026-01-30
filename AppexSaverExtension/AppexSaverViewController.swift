@@ -15,7 +15,7 @@ import AppKit
 import ScreenSaver
 import os.log
 
-private let logger = Logger(subsystem: "com.glouel.AppexSaver", category: "ViewController")
+private let logger = Logger(subsystem: "com.glouel.screensaver.AppexSaver", category: "ViewController")
 
 /// View controller that manages the screensaver view.
 /// Minimal implementation matching Apple's pattern.

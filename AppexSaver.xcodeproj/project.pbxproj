@@ -17,6 +17,10 @@
 		1A000030000000000000000A /* AppexSaverConfigurationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000030000000000000000B /* AppexSaverConfigurationViewController.swift */; };
 		1A000031000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000031000000000000000B /* Assets.xcassets */; };
 		1A000032000000000000000A /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000032000000000000000B /* PluginManager.swift */; };
+		1A000060000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
+		1A000061000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
+		1A000062000000000000000A /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000062000000000000000B /* PreviewView.swift */; };
+		1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000063000000000000000B /* PreviewViewRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +66,9 @@
 		1A000031000000000000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1A000032000000000000000B /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		1A000050000000000000000B /* BuildNumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BuildNumber.xcconfig; sourceTree = "<group>"; };
+		1A000060000000000000000B /* RainbowAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainbowAnimator.swift; sourceTree = "<group>"; };
+		1A000062000000000000000B /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
+		1A000063000000000000000B /* PreviewViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +107,9 @@
 				1A000001000000000000000B /* AppexSaverApp.swift */,
 				1A000002000000000000000B /* ContentView.swift */,
 				1A000032000000000000000B /* PluginManager.swift */,
+				1A000060000000000000000B /* RainbowAnimator.swift */,
+				1A000062000000000000000B /* PreviewView.swift */,
+				1A000063000000000000000B /* PreviewViewRepresentable.swift */,
 				1A00000A000000000000000B /* Info.plist */,
 				1A00000B000000000000000B /* AppexSaver.entitlements */,
 			);
@@ -271,6 +281,9 @@
 				1A000001000000000000000A /* AppexSaverApp.swift in Sources */,
 				1A000002000000000000000A /* ContentView.swift in Sources */,
 				1A000032000000000000000A /* PluginManager.swift in Sources */,
+				1A000060000000000000000A /* RainbowAnimator.swift in Sources */,
+				1A000062000000000000000A /* PreviewView.swift in Sources */,
+				1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,6 +295,7 @@
 				1A000004000000000000000A /* AppexSaverViewController.swift in Sources */,
 				1A000005000000000000000A /* AppexSaverView.swift in Sources */,
 				1A000030000000000000000A /* AppexSaverConfigurationViewController.swift in Sources */,
+				1A000061000000000000000A /* RainbowAnimator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

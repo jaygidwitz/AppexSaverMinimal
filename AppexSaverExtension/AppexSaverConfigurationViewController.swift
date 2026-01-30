@@ -9,7 +9,7 @@
 import AppKit
 import os.log
 
-private let logger = Logger(subsystem: "com.glouel.AppexSaver", category: "Configuration")
+private let logger = Logger(subsystem: "com.glouel.screensaver.AppexSaver", category: "Configuration")
 
 /// View controller for the screensaver configuration sheet.
 @objc(AppexSaverConfigurationViewController)
