@@ -17,57 +17,65 @@ struct ContentView: View {
     @State private var statusMessage = "Ready"
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // MARK: - Header
-                Image(systemName: "tv")
-                    .font(.system(size: 60))
-                    .foregroundColor(.accentColor)
+        VStack(spacing: 20) {
+            // MARK: - Header
+            Image(systemName: "tv")
+                .font(.system(size: 60))
+                .foregroundColor(.accentColor)
 
-                Text("AppexSaver")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+            Text("AppexSaver")
+                .font(.largeTitle)
+                .fontWeight(.bold)
 
-                Text("Screensaver Extension")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
+            Text("Screensaver Extension")
+                .font(.title2)
+                .foregroundColor(.secondary)
 
-                Divider()
-                    .padding(.horizontal, 40)
+            Divider()
+                .padding(.horizontal, 40)
 
-                // MARK: - Extension Status
-                Text("Extension Status")
-                    .font(.headline)
+            // MARK: - Extension Status
+            Text("Extension Status")
+                .font(.headline)
 
-                extensionStatusView
-                    .padding(.horizontal, 20)
+            extensionStatusView
+                .padding(.horizontal, 20)
 
-                Divider()
-                    .padding(.horizontal, 40)
+            Divider()
+                .padding(.horizontal, 40)
 
-                // MARK: - Actions
-                HStack(spacing: 12) {
-                    Button("Open Preview") {
-                        openWindow(id: "preview")
-                    }
-                    .buttonStyle(.borderedProminent)
+            // MARK: - Screensaver Activation
+            Text("Screensaver Activation")
+                .font(.headline)
 
-                    Button("Open Screen Saver Settings") {
-                        openScreenSaverSettings()
-                    }
-                    .buttonStyle(.bordered)
+            screensaverActivationView
+                .padding(.horizontal, 20)
+
+            Divider()
+                .padding(.horizontal, 40)
+
+            // MARK: - Actions
+            HStack(spacing: 12) {
+                Button("Open Preview") {
+                    openWindow(id: "preview")
                 }
+                .buttonStyle(.borderedProminent)
 
-                Text(statusMessage)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 10)
-                    .frame(maxWidth: .infinity)
-                    .multilineTextAlignment(.center)
+                Button("Open Screen Saver Settings") {
+                    openScreenSaverSettings()
+                }
+                .buttonStyle(.bordered)
             }
-            .padding(40)
+
+            Text(statusMessage)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 10)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
         }
-        .frame(minWidth: 450, minHeight: 450)
+        .padding(40)
+        .fixedSize()
     }
 
     @ViewBuilder
@@ -156,6 +164,68 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding(.top, 4)
+            }
+            .padding(8)
+        }
+    }
+
+    @ViewBuilder
+    private var screensaverActivationView: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                // Status indicator
+                HStack {
+                    Circle()
+                        .fill(pluginManager.isActiveScreensaver ? Color.green : Color.gray)
+                        .frame(width: 10, height: 10)
+
+                    if pluginManager.isActiveScreensaver {
+                        Text("Active")
+                            .fontWeight(.medium)
+                    } else {
+                        Text("Not Active")
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    if pluginManager.isCheckingScreensaver {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Button {
+                            pluginManager.checkScreensaverStatus()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Refresh status")
+                    }
+                }
+
+                // Error message if any
+                if let error = pluginManager.screensaverError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+
+                // Enable button (only show if extension is installed and not already active)
+                if pluginManager.isInstalled && !pluginManager.isActiveScreensaver {
+                    HStack {
+                        Spacer()
+                        Button("Enable as Screensaver") {
+                            Task {
+                                await pluginManager.enableAsScreensaver()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(pluginManager.isCheckingScreensaver)
+                        Spacer()
+                    }
+                    .padding(.top, 4)
+                }
             }
             .padding(8)
         }
