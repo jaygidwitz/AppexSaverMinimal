@@ -15,13 +15,15 @@ xcodebuild -scheme AppexSaver -configuration Debug build
 
 ## Register Extension
 
-```bash
-# Register with pluginkit
-pluginkit -a ~/Library/Developer/Xcode/DerivedData/AppexSaver-*/Build/Products/Debug/AppexSaver.app/Contents/PlugIns/AppexSaverExtension.appex
+macOS may automatically register the extension when the app is placed in `/Applications`. You can also register manually:
 
-# Set as active screensaver
-swift SetScreensaver.swift
+```bash
+pluginkit -a ~/Library/Developer/Xcode/DerivedData/AppexSaver-*/Build/Products/Debug/AppexSaver.app/Contents/PlugIns/AppexSaverExtension.appex
 ```
+
+## Set as Active Screensaver
+
+Launch the app and use the built-in button to register. Enabling the screensaver is done via [PaperSaver](https://github.com/AerialScreensaver/PaperSaver) 0.2.0+.
 
 ## Test
 
@@ -53,3 +55,7 @@ Traditional `ScreenSaverView` methods (`draw()`, `animateOneFrame()`, `startAnim
 - Start your own Timer in `viewDidMoveToWindow()` rather than relying on `startAnimation()`
 
 See [BACKGROUND.md](BACKGROUND.md) for detailed technical information.
+
+## Development Caveat
+
+Once registered from `/Applications`, macOS will not run builds from Xcode's DerivedData and won't allow registering the extension from another location. On a development machine, it is recommended to only use DerivedData builds and test deployment in `/Applications` in a separate VM.
