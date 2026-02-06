@@ -7,6 +7,7 @@
 
 import ScreenSaver
 import QuartzCore
+import WebKit
 import os.log
 
 private let logger = Logger(subsystem: "com.glouel.screensaver.AppexSaver", category: "View")
@@ -18,6 +19,9 @@ final class AppexSaverView: ScreenSaverView {
 
     /// Shared animation logic
     private let animator = RainbowAnimator()
+
+    /// Web view covering the left half of the screen
+    private var webView: WKWebView?
 
     /// Frame counter (exposed for ViewController to read in deinit)
     var frameCount: Int { animator.frameCount }
@@ -51,7 +55,18 @@ final class AppexSaverView: ScreenSaverView {
         // Set animation time interval (60 FPS)
         animationTimeInterval = 1.0 / 60.0
 
+        // Add WKWebView covering the left half
+        let wv = WKWebView(frame: leftHalfFrame())
+        wv.autoresizingMask = [.height]
+        addSubview(wv)
+        wv.loadHTMLString("<h1>Hello from WKWebView</h1>", baseURL: nil)
+        webView = wv
+
         logger.info("commonInit() completed")
+    }
+
+    private func leftHalfFrame() -> NSRect {
+        NSRect(x: 0, y: 0, width: bounds.width / 2, height: bounds.height)
     }
 
     // MARK: - Layer Setup (Arabesque implements this)
@@ -117,5 +132,6 @@ final class AppexSaverView: ScreenSaverView {
     override func layout() {
         super.layout()
         animator.updateBounds(bounds)
+        webView?.frame = leftHalfFrame()
     }
 }
