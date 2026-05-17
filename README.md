@@ -54,7 +54,9 @@ xcodebuild -project AppexSaverMinimal.xcodeproj -scheme AppexSaverMinimal -confi
 
 ### Installing
 
-There are two ways to register the screensaver with macOS:
+Most of the time you don't need to register the extension explicitly: macOS scans known locations (such as the Xcode build folder and `/Applications/`) and picks up new appex screensavers automatically shortly after they're built. After a build, opening **System Settings → Screen Saver** is usually enough — **AppexSaverMinimal** will be in the list.
+
+If it doesn't appear, you can nudge `pluginkit`:
 
 1. **From the host app** — run the host app and click **Install**. This calls `pluginkit -a` on the embedded `.appex`.
 2. **Manually with pluginkit:**
@@ -63,7 +65,18 @@ There are two ways to register the screensaver with macOS:
    pluginkit -a ~/Library/Developer/Xcode/DerivedData/AppexSaverMinimal-*/Build/Products/Debug/AppexSaverMinimal.app/Contents/PlugIns/AppexSaverMinimalExtension.appex
    ```
 
-Then open **System Settings → Screen Saver** and choose **AppexSaverMinimal**, or use the **Enable as Screensaver** button in the host app (powered by [PaperSaver](https://github.com/AerialScreensaver/PaperSaver) 0.2.0+).
+Then pick **AppexSaverMinimal** in System Settings, or use the **Enable as Screensaver** button in the host app (powered by [PaperSaver](https://github.com/AerialScreensaver/PaperSaver) 0.2.0+).
+
+#### Important: pick ONE location per machine
+
+`pluginkit` keeps a cache of where it found each extension, and it appears to hardcode a preference for `/Applications/`. If you build the app in DerivedData **and** also install a copy in `/Applications/`, macOS will keep loading the `/Applications/` copy regardless of which one you most recently built — and `pluginkit` will refuse to register a second copy from somewhere else.
+
+Pick one location and stick with it on a given machine:
+
+- **Always use DerivedData** — develop in Xcode, never copy to `/Applications/`. Simplest while iterating.
+- **Always use `/Applications/`** — add a build phase or post-build script that copies `AppexSaverMinimal.app` into `/Applications/` (replacing any previous copy) before you trigger the screensaver. Closer to the user-install experience.
+
+If you've already mixed both, remove the `/Applications/` copy and re-register the DerivedData one (or vice versa) to clear the cache. For full isolation between development and release-build testing, use a separate VM.
 
 ### Distribution
 
@@ -153,10 +166,6 @@ If you need to target older macOS versions that don't support Appex screensavers
 | **Min macOS** | 14.0 (Sonoma) | All supported macOS |
 | **Distribution** | Embedded in a `.app` | Standalone `.saver` file |
 | **System Settings entry** | Listed alongside Apple's first-party savers | Listed under a separate "Other" group |
-
-## Development Caveat
-
-Once a copy of the appex is registered from `/Applications` (e.g. after installing a release build), macOS will not pick up DerivedData builds, and `pluginkit` won't let you register a second copy from elsewhere. On a development machine it's safest to use DerivedData builds only and test `/Applications` deployment in a separate VM.
 
 ## License
 
