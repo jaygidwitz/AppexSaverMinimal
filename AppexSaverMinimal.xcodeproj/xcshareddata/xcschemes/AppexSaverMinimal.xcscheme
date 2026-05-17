@@ -15,9 +15,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "1A00001A000000000000000A"
-                     BuildableName = "AppexSaver.app"
-                     BlueprintName = "AppexSaver"
-                     ReferencedContainer = "container:AppexSaver.xcodeproj">
+                     BuildableName = "AppexSaverMinimal.app"
+                     BlueprintName = "AppexSaverMinimal"
+                     ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A00001A000000000000000A"
-               BuildableName = "AppexSaver.app"
-               BlueprintName = "AppexSaver"
-               ReferencedContainer = "container:AppexSaver.xcodeproj">
+               BuildableName = "AppexSaverMinimal.app"
+               BlueprintName = "AppexSaverMinimal"
+               ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A00001A000000000000000A"
-            BuildableName = "AppexSaver.app"
-            BlueprintName = "AppexSaver"
-            ReferencedContainer = "container:AppexSaver.xcodeproj">
+            BuildableName = "AppexSaverMinimal.app"
+            BlueprintName = "AppexSaverMinimal"
+            ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -79,9 +79,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A00001A000000000000000A"
-            BuildableName = "AppexSaver.app"
-            BlueprintName = "AppexSaver"
-            ReferencedContainer = "container:AppexSaver.xcodeproj">
+            BuildableName = "AppexSaverMinimal.app"
+            BlueprintName = "AppexSaverMinimal"
+            ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -1,15 +1,17 @@
 //
 //  PluginManager.swift
-//  AppexSaver
+//  AppexSaverMinimal
 //
-//  Manages the installation and status of the screensaver extension.
+//  Copyright © 2026 Guillaume Louel. Licensed under the MIT License.
+//
+//  Drives extension registration (via pluginkit) and screensaver activation
+//  (via PaperSaverKit) from the host app's UI.
 //
 
 import Foundation
-import os.log
 import PaperSaverKit
 
-private let logger = Logger(subsystem: "com.glouel.screensaver.AppexSaver", category: "PluginManager")
+private let logger = AppexLog.logger("PluginManager")
 
 @MainActor
 class PluginManager: ObservableObject {
@@ -23,16 +25,16 @@ class PluginManager: ObservableObject {
     @Published var isCheckingScreensaver: Bool = false
     @Published var screensaverError: String?
 
-    private let bundleIdentifier = "com.glouel.screensaver.AppexSaver.AppexSaverExtension"
+    private let bundleIdentifier = "net.aerialscreensaver.AppexSaverMinimal.Extension"
     private let paperSaver = PaperSaver()
-    private let screensaverDisplayName = "AppexSaverExtension"
+    private let screensaverDisplayName = "AppexSaverMinimalExtension"
 
-    /// Path to the embedded extension in the app bundle
+    /// Path to the embedded extension in the app bundle.
     var embeddedExtensionPath: String? {
-        Bundle.main.builtInPlugInsURL?.appendingPathComponent("AppexSaverExtension.appex").path
+        Bundle.main.builtInPlugInsURL?.appendingPathComponent("AppexSaverMinimalExtension.appex").path
     }
 
-    /// Version of the embedded extension
+    /// Version of the embedded extension.
     var embeddedVersion: String? {
         guard let path = embeddedExtensionPath,
               let bundle = Bundle(path: path),
@@ -47,7 +49,7 @@ class PluginManager: ObservableObject {
         checkScreensaverStatus()
     }
 
-    /// Check if the extension is registered with pluginkit
+    /// Check if the extension is registered with pluginkit.
     func checkInstallationStatus() {
         isLoading = true
         lastError = nil
@@ -73,18 +75,17 @@ class PluginManager: ObservableObject {
         }
     }
 
-    /// Query pluginkit for our extension's registration status
+    /// Query pluginkit for our extension's registration status.
+    /// Line format we look for:
+    ///   `+    net.aerialscreensaver.AppexSaverMinimal.Extension(1.0) <path>`
     private func queryPluginKit() async throws -> (Bool, String?, String?) {
         let output = try runProcess("/usr/bin/pluginkit", arguments: ["-m", "-v", "-p", "com.apple.screensaver"])
 
-        // Parse output for our bundle identifier
-        // Format: "    com.glouel.AppexSaver.AppexSaverExtension(1.0) <path>"
         let lines = output.components(separatedBy: "\n")
         for line in lines {
             if line.contains(bundleIdentifier) {
                 logger.info("Found extension in pluginkit output: \(line, privacy: .public)")
 
-                // Extract version (in parentheses)
                 var version: String?
                 if let versionStart = line.firstIndex(of: "("),
                    let versionEnd = line.firstIndex(of: ")") {
@@ -92,7 +93,6 @@ class PluginManager: ObservableObject {
                     version = String(line[start..<versionEnd])
                 }
 
-                // Extract path (starts with "/" after UUID and timestamp)
                 var path: String?
                 if let pathStart = line.range(of: "/", options: [], range: line.startIndex..<line.endIndex) {
                     path = String(line[pathStart.lowerBound...])
@@ -105,7 +105,7 @@ class PluginManager: ObservableObject {
         return (false, nil, nil)
     }
 
-    /// Install the extension using pluginkit
+    /// Install the embedded extension by handing it to pluginkit.
     func install() throws {
         guard let extensionPath = embeddedExtensionPath else {
             throw PluginError.embeddedExtensionNotFound
@@ -124,7 +124,6 @@ class PluginManager: ObservableObject {
             _ = try runProcess("/usr/bin/pluginkit", arguments: ["-a", extensionPath])
             logger.info("Extension installed successfully")
 
-            // Re-check status after installation
             checkInstallationStatus()
             checkScreensaverStatus()
         } catch {
@@ -134,9 +133,8 @@ class PluginManager: ObservableObject {
         }
     }
 
-    /// Uninstall the extension using pluginkit
+    /// Uninstall the extension.
     func uninstall() throws {
-        // Use the installed path if available, otherwise use the embedded path
         let extensionPath: String
         if let installed = installedPath, !installed.isEmpty {
             extensionPath = installed
@@ -155,7 +153,6 @@ class PluginManager: ObservableObject {
             _ = try runProcess("/usr/bin/pluginkit", arguments: ["-r", extensionPath])
             logger.info("Extension uninstalled successfully")
 
-            // Re-check status after uninstallation
             checkInstallationStatus()
         } catch {
             isLoading = false
@@ -164,7 +161,7 @@ class PluginManager: ObservableObject {
         }
     }
 
-    /// Check if our screensaver is the active screensaver
+    /// Check if our screensaver is the active screensaver on any display.
     func checkScreensaverStatus() {
         isCheckingScreensaver = true
         screensaverError = nil
@@ -174,7 +171,7 @@ class PluginManager: ObservableObject {
         isCheckingScreensaver = false
     }
 
-    /// Enable our screensaver as the active screensaver on all displays
+    /// Enable our screensaver as the active screensaver on every display.
     func enableAsScreensaver() async {
         isCheckingScreensaver = true
         screensaverError = nil
@@ -188,7 +185,7 @@ class PluginManager: ObservableObject {
         }
     }
 
-    /// Run a process and return its output
+    /// Run a subprocess and return its combined stdout/stderr.
     private func runProcess(_ path: String, arguments: [String]) throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
@@ -207,8 +204,8 @@ class PluginManager: ObservableObject {
         logger.debug("Process output: \(output, privacy: .public)")
 
         if process.terminationStatus != 0 {
+            // pluginkit returns non-zero when no matches are found, so don't treat it as fatal.
             logger.warning("Process exited with status: \(process.terminationStatus)")
-            // Don't throw for non-zero exit - pluginkit returns non-zero when no matches found
         }
 
         return output

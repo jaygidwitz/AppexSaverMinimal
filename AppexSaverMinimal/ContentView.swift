@@ -1,15 +1,16 @@
 //
 //  ContentView.swift
-//  AppexSaver
+//  AppexSaverMinimal
 //
-//  Main view for the host application.
-//  Displays extension status and provides install/uninstall functionality.
+//  Copyright © 2026 Guillaume Louel. Licensed under the MIT License.
+//
+//  Main view for the host application. Shows extension registration status
+//  and provides install / uninstall and "set as active screensaver" actions.
 //
 
 import SwiftUI
-import os.log
 
-private let logger = Logger(subsystem: "com.glouel.AppexSaver", category: "HostApp")
+private let logger = AppexLog.logger("HostApp")
 
 struct ContentView: View {
     @Environment(\.openWindow) private var openWindow
@@ -23,7 +24,7 @@ struct ContentView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.accentColor)
 
-            Text("AppexSaver")
+            Text("AppexSaverMinimal")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
@@ -82,7 +83,6 @@ struct ContentView: View {
     private var extensionStatusView: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 12) {
-                // Status indicator
                 HStack {
                     Circle()
                         .fill(pluginManager.isInstalled ? Color.green : Color.gray)
@@ -117,7 +117,6 @@ struct ContentView: View {
                     }
                 }
 
-                // Path or embedded version info
                 if pluginManager.isInstalled {
                     if let path = pluginManager.installedPath {
                         HStack(alignment: .top) {
@@ -138,14 +137,12 @@ struct ContentView: View {
                     }
                 }
 
-                // Error message if any
                 if let error = pluginManager.lastError {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                 }
 
-                // Action button
                 HStack {
                     Spacer()
                     if pluginManager.isInstalled {
@@ -173,7 +170,6 @@ struct ContentView: View {
     private var screensaverActivationView: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 12) {
-                // Status indicator
                 HStack {
                     Circle()
                         .fill(pluginManager.isActiveScreensaver ? Color.green : Color.gray)
@@ -204,14 +200,12 @@ struct ContentView: View {
                     }
                 }
 
-                // Error message if any
                 if let error = pluginManager.screensaverError {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                 }
 
-                // Enable button (only show if extension is installed and not already active)
                 if pluginManager.isInstalled && !pluginManager.isActiveScreensaver {
                     HStack {
                         Spacer()

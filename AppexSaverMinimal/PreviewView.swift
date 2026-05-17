@@ -1,52 +1,38 @@
 //
 //  PreviewView.swift
-//  AppexSaver
+//  AppexSaverMinimal
 //
-//  NSView subclass that hosts the rainbow animation for preview in the host app.
+//  Copyright © 2026 Guillaume Louel. Licensed under the MIT License.
+//
+//  NSView that runs the same RainbowAnimator the screensaver extension uses,
+//  so the host app's Preview window matches what the screensaver displays.
 //
 
 import AppKit
-import WebKit
 
-/// A view that displays the screensaver animation for preview purposes.
 final class PreviewView: NSView {
 
     private let animator = RainbowAnimator()
-    private var webView: WKWebView?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        commonInit()
+        wantsLayer = true
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        commonInit()
-    }
-
-    private func commonInit() {
         wantsLayer = true
-
-        let wv = WKWebView(frame: leftHalfFrame())
-        wv.autoresizingMask = [.height]
-        addSubview(wv)
-        wv.loadHTMLString("<h1>Hello from WKWebView</h1>", baseURL: nil)
-        webView = wv
-    }
-
-    private func leftHalfFrame() -> NSRect {
-        NSRect(x: 0, y: 0, width: bounds.width / 2, height: bounds.height)
     }
 
     override func makeBackingLayer() -> CALayer {
         let layer = CALayer()
+        layer.backgroundColor = animator.currentBackgroundColor.cgColor
         layer.isOpaque = true
         return layer
     }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-
         if window != nil {
             if let layer = self.layer {
                 animator.attach(to: layer)
@@ -61,7 +47,6 @@ final class PreviewView: NSView {
     override func layout() {
         super.layout()
         animator.updateBounds(bounds)
-        webView?.frame = leftHalfFrame()
     }
 
     deinit {

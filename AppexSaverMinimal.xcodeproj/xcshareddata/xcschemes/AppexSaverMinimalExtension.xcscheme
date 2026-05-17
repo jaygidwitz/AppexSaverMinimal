@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A000010000000000000000A"
-               BuildableName = "AppexSaverExtension.appex"
-               BlueprintName = "AppexSaverExtension"
-               ReferencedContainer = "container:AppexSaver.xcodeproj">
+               BuildableName = "AppexSaverMinimalExtension.appex"
+               BlueprintName = "AppexSaverMinimalExtension"
+               ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -50,9 +50,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A000010000000000000000A"
-            BuildableName = "AppexSaverExtension.appex"
-            BlueprintName = "AppexSaverExtension"
-            ReferencedContainer = "container:AppexSaver.xcodeproj">
+            BuildableName = "AppexSaverMinimalExtension.appex"
+            BlueprintName = "AppexSaverMinimalExtension"
+            ReferencedContainer = "container:AppexSaverMinimal.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
