@@ -163,16 +163,18 @@ struct ContentView: View {
         ZStack {
             backdrop.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    header
-                    previewCard
-                    librarySection
-                    screensaverSection
-                    storeSection
+                VStack(spacing: 0) {
+                    hero
+                    VStack(alignment: .leading, spacing: 28) {
+                        librarySection
+                        screensaverSection
+                        storeSection
+                    }
+                    .padding(30)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(30)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .ignoresSafeArea(edges: .top)
         }
         .frame(minWidth: 680, minHeight: 760)
         .preferredColorScheme(.dark)
@@ -193,28 +195,35 @@ struct ContentView: View {
             )
     }
 
-    // MARK: Header
+    // MARK: Hero (full-bleed cover video)
 
-    private var header: some View {
-        HStack(spacing: 14) {
-            SurrealismMark(size: 46)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Surrealism").font(.system(size: 30, weight: .bold))
-                Text("Video Screensaver").font(.title3).foregroundStyle(.white.opacity(0.55))
-            }
-            Spacer()
-        }
-    }
-
-    // MARK: Preview
-
-    private var previewCard: some View {
+    private var hero: some View {
         PreviewViewRepresentable(reloadToken: previewToken)
-            .frame(height: 280)
+            .frame(height: 380)
             .frame(maxWidth: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.1), lineWidth: 1))
-            .shadow(color: .black.opacity(0.4), radius: 16, y: 6)
+            .overlay(alignment: .bottom) {
+                LinearGradient(colors: [.clear, .black.opacity(0.65)],
+                               startPoint: .center, endPoint: .bottom)
+                    .frame(height: 160)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottomLeading) {
+                HStack(spacing: 13) {
+                    SurrealismMark(size: 42)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Surrealism")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundStyle(.white)
+                        Text("Video Screensaver")
+                            .font(.title3)
+                            .foregroundStyle(.white.opacity(0.75))
+                    }
+                }
+                .padding(28)
+                .shadow(color: .black.opacity(0.5), radius: 8, y: 1)
+            }
+            .clipped()
     }
 
     // MARK: Library

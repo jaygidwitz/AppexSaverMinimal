@@ -18,6 +18,7 @@ struct AppexSaverMinimalApp: App {
             ContentView()
         }
         .defaultSize(width: 720, height: 860)
+        .windowStyle(.hiddenTitleBar)
 
         Window("Preview", id: "preview") {
             PreviewViewRepresentable()
