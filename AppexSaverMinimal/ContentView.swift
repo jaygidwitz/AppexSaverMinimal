@@ -45,6 +45,49 @@ struct SurrealismMark: View {
     }
 }
 
+// MARK: - Button styles
+
+/// Iridescent gradient capsule — the brand's primary action.
+struct IrisButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 9)
+            .background(
+                Capsule().fill(
+                    LinearGradient(colors: [
+                        Color(red: 0.58, green: 0.28, blue: 0.96),
+                        Color(red: 0.36, green: 0.40, blue: 0.98),
+                        Color(red: 0.20, green: 0.80, blue: 0.95),
+                        Color(red: 0.91, green: 0.36, blue: 0.86),
+                    ], startPoint: .leading, endPoint: .trailing)
+                )
+            )
+            .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
+            .shadow(color: Color(red: 0.5, green: 0.3, blue: 0.95).opacity(0.5), radius: 10, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+/// Quiet glass capsule for secondary actions.
+struct GhostButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(Capsule().fill(Color.white.opacity(0.07)))
+            .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Library model
 
 struct LibraryVideo: Identifiable {
@@ -243,7 +286,7 @@ struct ContentView: View {
                 Button { library.addVideos { bumpPreview() } } label: {
                     Label("Add Loops…", systemImage: "plus")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(IrisButtonStyle())
                 .disabled(library.isBusy)
                 if library.isBusy { ProgressView().scaleEffect(0.7) }
                 Spacer()
@@ -326,11 +369,11 @@ struct ContentView: View {
                             Button(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver") {
                                 setUpScreensaver()
                             }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(IrisButtonStyle())
                             .disabled(pluginManager.isLoading || pluginManager.isCheckingScreensaver)
                         }
                         Button("Screen Saver Settings") { openScreenSaverSettings() }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(GhostButtonStyle())
                         if pluginManager.isLoading || pluginManager.isCheckingScreensaver {
                             ProgressView().scaleEffect(0.6)
                         }
@@ -354,7 +397,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button("Visit surrealism.app") { NSWorkspace.shared.open(storeURL) }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(IrisButtonStyle())
             }
         }
     }
