@@ -6,8 +6,7 @@
 //
 //  Host app: manages the local loop library (the /Users/Shared cache the
 //  screensaver reads), previews it live, and installs/activates the saver.
-//  The license + download-from-surrealism.app flow lands here once the backend
-//  exists; for now the library is managed locally via "Add Loops…".
+//  Dark, immersive theme to match the surreal loops.
 //
 
 import SwiftUI
@@ -18,6 +17,34 @@ import UniformTypeIdentifiers
 private let logger = AppexLog.logger("HostApp")
 private let storeURL = URL(string: "https://surrealism.app")!
 
+// MARK: - Brand mark
+
+/// Iridescent glossy orb echoing the metallic surreal loops.
+struct SurrealismMark: View {
+    var size: CGFloat = 40
+    var body: some View {
+        ZStack {
+            Circle().fill(
+                AngularGradient(gradient: Gradient(colors: [
+                    Color(red: 0.55, green: 0.25, blue: 0.95),
+                    Color(red: 0.25, green: 0.35, blue: 0.95),
+                    Color(red: 0.35, green: 0.70, blue: 0.95),
+                    Color(red: 0.95, green: 0.35, blue: 0.75),
+                    Color(red: 0.55, green: 0.25, blue: 0.95),
+                ]), center: .center))
+            Ellipse().fill(
+                RadialGradient(colors: [.white.opacity(0.8), .clear],
+                               center: .center, startRadius: 0, endRadius: size * 0.30))
+                .frame(width: size * 0.52, height: size * 0.40)
+                .offset(x: -size * 0.15, y: -size * 0.18)
+                .blur(radius: size * 0.02)
+            Circle().strokeBorder(.white.opacity(0.25), lineWidth: max(1, size * 0.03))
+        }
+        .frame(width: size, height: size)
+        .shadow(color: Color(red: 0.5, green: 0.2, blue: 0.9).opacity(0.5), radius: size * 0.2, y: size * 0.05)
+    }
+}
+
 // MARK: - Library model
 
 struct LibraryVideo: Identifiable {
@@ -25,7 +52,12 @@ struct LibraryVideo: Identifiable {
     let bytes: Int64
     var thumbnail: NSImage?
     var id: URL { url }
-    var name: String { url.deletingPathExtension().lastPathComponent }
+
+    /// Friendly name: bare numeric filenames become "Loop 3".
+    var displayName: String {
+        let n = url.deletingPathExtension().lastPathComponent
+        return n.allSatisfy(\.isNumber) && !n.isEmpty ? "Loop \(n)" : n
+    }
 }
 
 @MainActor
@@ -62,7 +94,7 @@ final class LibraryViewModel: ObservableObject {
         let asset = AVURLAsset(url: url)
         let gen = AVAssetImageGenerator(asset: asset)
         gen.appliesPreferredTrackTransform = true
-        gen.maximumSize = CGSize(width: 480, height: 270)
+        gen.maximumSize = CGSize(width: 640, height: 360)
         let time = CMTime(seconds: 1, preferredTimescale: 600)
         guard let cg = try? gen.copyCGImage(at: time, actualTime: nil) else { return nil }
         return NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
@@ -93,11 +125,7 @@ final class LibraryViewModel: ObservableObject {
                     logger.error("Copy failed: \(error.localizedDescription, privacy: .public)")
                 }
             }
-            await MainActor.run {
-                self.isBusy = false
-                self.reload()
-                completion()
-            }
+            await MainActor.run { self.isBusy = false; self.reload(); completion() }
         }
     }
 
@@ -109,55 +137,12 @@ final class LibraryViewModel: ObservableObject {
 
     nonisolated static func ensureCacheDir() {
         try? FileManager.default.createDirectory(
-            atPath: VideoCache.directory,
-            withIntermediateDirectories: true,
-            attributes: [.posixPermissions: 0o755]
-        )
+            atPath: VideoCache.directory, withIntermediateDirectories: true,
+            attributes: [.posixPermissions: 0o755])
     }
 
     static func formatted(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
-    }
-}
-
-// MARK: - Brand mark
-
-/// Iridescent glossy orb, echoing the metallic surreal loops. Used in place of
-/// a flat SF Symbol so the app reads as branded rather than generic.
-struct SurrealismMark: View {
-    var size: CGFloat = 40
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    AngularGradient(
-                        gradient: Gradient(colors: [
-                            Color(red: 0.55, green: 0.25, blue: 0.95),
-                            Color(red: 0.25, green: 0.35, blue: 0.95),
-                            Color(red: 0.35, green: 0.70, blue: 0.95),
-                            Color(red: 0.95, green: 0.35, blue: 0.75),
-                            Color(red: 0.55, green: 0.25, blue: 0.95),
-                        ]),
-                        center: .center
-                    )
-                )
-            Ellipse()
-                .fill(
-                    RadialGradient(
-                        colors: [.white.opacity(0.75), .clear],
-                        center: .center, startRadius: 0, endRadius: size * 0.30
-                    )
-                )
-                .frame(width: size * 0.52, height: size * 0.40)
-                .offset(x: -size * 0.15, y: -size * 0.18)
-                .blur(radius: size * 0.02)
-            Circle()
-                .strokeBorder(.white.opacity(0.22), lineWidth: max(1, size * 0.03))
-        }
-        .frame(width: size, height: size)
-        .shadow(color: Color(red: 0.5, green: 0.2, blue: 0.9).opacity(0.45),
-                radius: size * 0.18, y: size * 0.06)
     }
 }
 
@@ -168,26 +153,45 @@ struct ContentView: View {
     @StateObject private var library = LibraryViewModel()
     @State private var previewToken = 0
 
-    private let columns = [GridItem(.adaptive(minimum: 168), spacing: 14)]
+    private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
+
+    private let backdrop = LinearGradient(
+        colors: [Color(red: 0.09, green: 0.05, blue: 0.17), Color(red: 0.02, green: 0.02, blue: 0.05)],
+        startPoint: .top, endPoint: .bottom)
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 26) {
-                header
-                previewCard
-                librarySection
-                screensaverSection
-                storeSection
+        ZStack {
+            backdrop.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    header
+                    previewCard
+                    librarySection
+                    screensaverSection
+                    storeSection
+                }
+                .padding(30)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(28)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(minWidth: 660, minHeight: 720)
+        .frame(minWidth: 680, minHeight: 760)
+        .preferredColorScheme(.dark)
         .navigationTitle("Surrealism")
         .onAppear { library.reload() }
     }
 
     private func bumpPreview() { previewToken += 1 }
+
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.white.opacity(0.08)))
+            )
+    }
 
     // MARK: Header
 
@@ -195,146 +199,113 @@ struct ContentView: View {
         HStack(spacing: 14) {
             SurrealismMark(size: 46)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Surrealism")
-                    .font(.system(size: 28, weight: .bold))
-                Text("Video Screensaver")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+                Text("Surrealism").font(.system(size: 30, weight: .bold))
+                Text("Video Screensaver").font(.title3).foregroundStyle(.white.opacity(0.55))
             }
             Spacer()
         }
     }
 
-    // MARK: Live preview
+    // MARK: Preview
 
     private var previewCard: some View {
         PreviewViewRepresentable(reloadToken: previewToken)
-            .frame(height: 264)
+            .frame(height: 280)
             .frame(maxWidth: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.1), lineWidth: 1))
+            .shadow(color: .black.opacity(0.4), radius: 16, y: 6)
     }
 
     // MARK: Library
 
     private var librarySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Your Loops")
-                    .font(.title2).fontWeight(.semibold)
+                Text("Your Loops").font(.title2).fontWeight(.semibold)
                 Spacer()
                 if !library.isEmpty {
-                    Text("\(library.videos.count) · \(LibraryViewModel.formatted(library.totalBytes))")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Text("\(library.videos.count) loops · \(LibraryViewModel.formatted(library.totalBytes))")
+                        .font(.callout).foregroundStyle(.white.opacity(0.5))
                 }
             }
 
             HStack(spacing: 10) {
-                Button {
-                    library.addVideos { bumpPreview() }
-                } label: {
+                Button { library.addVideos { bumpPreview() } } label: {
                     Label("Add Loops…", systemImage: "plus")
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(library.isBusy)
-
-                if library.isBusy {
-                    ProgressView().scaleEffect(0.7)
-                }
+                if library.isBusy { ProgressView().scaleEffect(0.7) }
                 Spacer()
             }
 
             if library.isEmpty {
-                emptyLibraryState
+                emptyState
             } else {
-                LazyVGrid(columns: columns, spacing: 14) {
-                    ForEach(library.videos) { video in
-                        libraryCell(video)
-                    }
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(library.videos) { cell($0) }
                 }
             }
         }
     }
 
-    private var emptyLibraryState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "film.stack")
-                .font(.system(size: 34))
-                .foregroundStyle(.secondary)
-            Text("No loops yet")
-                .font(.headline)
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            SurrealismMark(size: 44)
+            Text("No loops yet").font(.headline)
             Text("Add your own seamless loops, or unlock the full library at surrealism.app.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .font(.callout).foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.08)))
+        .frame(maxWidth: .infinity).padding(.vertical, 48)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.04)))
     }
 
-    private func libraryCell(_ video: LibraryVideo) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func cell(_ video: LibraryVideo) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topTrailing) {
                 Group {
                     if let thumb = video.thumbnail {
-                        Image(nsImage: thumb)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        Image(nsImage: thumb).resizable().aspectRatio(contentMode: .fill)
                     } else {
-                        Rectangle().fill(Color.black.opacity(0.6))
+                        Rectangle().fill(Color.white.opacity(0.06))
                             .overlay(ProgressView().scaleEffect(0.7))
                     }
                 }
-                .frame(height: 96)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(height: 124).frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.08)))
 
                 Button(role: .destructive) {
                     library.remove(video) { bumpPreview() }
                 } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 20))
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .black.opacity(0.5))
+                        .foregroundStyle(.white, .black.opacity(0.55))
                 }
-                .buttonStyle(.plain)
-                .padding(6)
-                .help("Remove this loop")
+                .buttonStyle(.plain).padding(8).help("Remove this loop")
             }
-            Text(video.name)
-                .font(.callout)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            Text(LibraryViewModel.formatted(video.bytes))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(video.displayName).font(.callout.weight(.medium)).lineLimit(1)
+            Text(LibraryViewModel.formatted(video.bytes)).font(.caption).foregroundStyle(.white.opacity(0.45))
         }
     }
 
-    // MARK: Screensaver controls
+    // MARK: Screensaver
 
     private var screensaverSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Screensaver")
-                .font(.title2).fontWeight(.semibold)
-
-            GroupBox {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Screensaver").font(.title2).fontWeight(.semibold)
+            card {
                 VStack(alignment: .leading, spacing: 14) {
                     if pluginManager.isActiveScreensaver {
                         Label("Surrealism is your active screensaver", systemImage: "checkmark.seal.fill")
-                            .font(.callout.weight(.medium))
-                            .foregroundStyle(.green)
+                            .font(.callout.weight(.medium)).foregroundStyle(.green)
                     } else {
                         Text(pluginManager.isInstalled
                              ? "Ready — make Surrealism your screensaver."
                              : "Set Surrealism as your Mac screensaver.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.65))
                     }
 
                     if let error = pluginManager.lastError ?? pluginManager.screensaverError {
@@ -357,37 +328,30 @@ struct ContentView: View {
                         Spacer()
                     }
                 }
-                .padding(6)
             }
         }
     }
 
-    // MARK: Store CTA
+    // MARK: Store
 
     private var storeSection: some View {
-        GroupBox {
+        card {
             HStack(spacing: 14) {
-                SurrealismMark(size: 32)
+                SurrealismMark(size: 34)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Get the full surrealism.app library")
-                        .fontWeight(.semibold)
+                    Text("Get the full surrealism.app library").fontWeight(.semibold)
                     Text("Unlock a growing catalog of surreal loops. Coming soon.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.white.opacity(0.5))
                 }
                 Spacer()
-                Button("Visit surrealism.app") {
-                    NSWorkspace.shared.open(storeURL)
-                }
-                .buttonStyle(.borderedProminent)
+                Button("Visit surrealism.app") { NSWorkspace.shared.open(storeURL) }
+                    .buttonStyle(.borderedProminent)
             }
-            .padding(6)
         }
     }
 
     // MARK: Actions
 
-    /// Installs (if needed) and activates the screensaver in one step.
     private func setUpScreensaver() {
         do {
             if !pluginManager.isInstalled { try pluginManager.install() }
