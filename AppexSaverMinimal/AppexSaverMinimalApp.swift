@@ -19,6 +19,15 @@ struct AppexSaverMinimalApp: App {
         }
         .defaultSize(width: 720, height: 860)
         .windowStyle(.hiddenTitleBar)
+        .commands {
+            CommandGroup(replacing: .help) {
+                Button("Surrealism Help") {
+                    if let url = URL(string: "https://surrealism.app") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
+        }
 
         Window("Preview", id: "preview") {
             PreviewViewRepresentable()

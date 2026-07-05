@@ -47,28 +47,19 @@ struct SurrealismMark: View {
 
 // MARK: - Button styles
 
-/// Iridescent gradient capsule — the brand's primary action.
-struct IrisButtonStyle: ButtonStyle {
+/// Clean white capsule — the brand's primary action. Restraint on the buttons;
+/// the iridescence lives only in the orb/wordmark.
+struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(red: 0.05, green: 0.03, blue: 0.10))
             .padding(.horizontal, 18)
             .padding(.vertical, 9)
-            .background(
-                Capsule().fill(
-                    LinearGradient(colors: [
-                        Color(red: 0.58, green: 0.28, blue: 0.96),
-                        Color(red: 0.36, green: 0.40, blue: 0.98),
-                        Color(red: 0.20, green: 0.80, blue: 0.95),
-                        Color(red: 0.91, green: 0.36, blue: 0.86),
-                    ], startPoint: .leading, endPoint: .trailing)
-                )
-            )
-            .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
-            .shadow(color: Color(red: 0.5, green: 0.3, blue: 0.95).opacity(0.5), radius: 10, y: 3)
+            .background(Capsule().fill(.white))
+            .shadow(color: .black.opacity(0.25), radius: 8, y: 2)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .opacity(configuration.isPressed ? 0.9 : 1)
+            .opacity(configuration.isPressed ? 0.82 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
@@ -286,7 +277,7 @@ struct ContentView: View {
                 Button { library.addVideos { bumpPreview() } } label: {
                     Label("Add Loops…", systemImage: "plus")
                 }
-                .buttonStyle(IrisButtonStyle())
+                .buttonStyle(PrimaryButtonStyle())
                 .disabled(library.isBusy)
                 if library.isBusy { ProgressView().scaleEffect(0.7) }
                 Spacer()
@@ -369,7 +360,7 @@ struct ContentView: View {
                             Button(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver") {
                                 setUpScreensaver()
                             }
-                            .buttonStyle(IrisButtonStyle())
+                            .buttonStyle(PrimaryButtonStyle())
                             .disabled(pluginManager.isLoading || pluginManager.isCheckingScreensaver)
                         }
                         Button("Screen Saver Settings") { openScreenSaverSettings() }
@@ -397,7 +388,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button("Visit surrealism.app") { NSWorkspace.shared.open(storeURL) }
-                    .buttonStyle(IrisButtonStyle())
+                    .buttonStyle(PrimaryButtonStyle())
             }
         }
     }
