@@ -16,6 +16,7 @@
 		1A000007000000000000000A /* AppexSaverMinimalExtension.appex in Embed PlugIns */ = {isa = PBXBuildFile; fileRef = 1A000007000000000000000B /* AppexSaverMinimalExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1A000030000000000000000A /* AppexSaverMinimalConfigurationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000030000000000000000B /* AppexSaverMinimalConfigurationViewController.swift */; };
 		1A000031000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000031000000000000000B /* Assets.xcassets */; };
+		F00DCAFE0000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000011 /* Assets.xcassets */; };
 		1A000032000000000000000A /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000032000000000000000B /* PluginManager.swift */; };
 		1A000060000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
 		1A000061000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
@@ -69,6 +70,7 @@
 		1A000011000000000000000B /* AppexSaverMinimalExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppexSaverMinimalExtension.entitlements; sourceTree = "<group>"; };
 		1A000030000000000000000B /* AppexSaverMinimalConfigurationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppexSaverMinimalConfigurationViewController.swift; sourceTree = "<group>"; };
 		1A000031000000000000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F00DCAFE0000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1A000032000000000000000B /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		1A000050000000000000000B /* BuildNumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BuildNumber.xcconfig; sourceTree = "<group>"; };
 		1A000060000000000000000B /* RainbowAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainbowAnimator.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 				1A000063000000000000000B /* PreviewViewRepresentable.swift */,
 				1A00000A000000000000000B /* Info.plist */,
 				1A00000B000000000000000B /* AppexSaverMinimal.entitlements */,
+				F00DCAFE0000000000000011 /* Assets.xcassets */,
 			);
 			path = AppexSaverMinimal;
 			sourceTree = "<group>";
@@ -263,6 +266,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F00DCAFE0000000000000010 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
