@@ -107,11 +107,6 @@ final class LibraryViewModel: ObservableObject {
         completion()
     }
 
-    func revealInFinder() {
-        Self.ensureCacheDir()
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: VideoCache.directory)
-    }
-
     nonisolated static func ensureCacheDir() {
         try? FileManager.default.createDirectory(
             atPath: VideoCache.directory,
@@ -122,6 +117,47 @@ final class LibraryViewModel: ObservableObject {
 
     static func formatted(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
+// MARK: - Brand mark
+
+/// Iridescent glossy orb, echoing the metallic surreal loops. Used in place of
+/// a flat SF Symbol so the app reads as branded rather than generic.
+struct SurrealismMark: View {
+    var size: CGFloat = 40
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    AngularGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.55, green: 0.25, blue: 0.95),
+                            Color(red: 0.25, green: 0.35, blue: 0.95),
+                            Color(red: 0.35, green: 0.70, blue: 0.95),
+                            Color(red: 0.95, green: 0.35, blue: 0.75),
+                            Color(red: 0.55, green: 0.25, blue: 0.95),
+                        ]),
+                        center: .center
+                    )
+                )
+            Ellipse()
+                .fill(
+                    RadialGradient(
+                        colors: [.white.opacity(0.75), .clear],
+                        center: .center, startRadius: 0, endRadius: size * 0.30
+                    )
+                )
+                .frame(width: size * 0.52, height: size * 0.40)
+                .offset(x: -size * 0.15, y: -size * 0.18)
+                .blur(radius: size * 0.02)
+            Circle()
+                .strokeBorder(.white.opacity(0.22), lineWidth: max(1, size * 0.03))
+        }
+        .frame(width: size, height: size)
+        .shadow(color: Color(red: 0.5, green: 0.2, blue: 0.9).opacity(0.45),
+                radius: size * 0.18, y: size * 0.06)
     }
 }
 
@@ -147,6 +183,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(minWidth: 660, minHeight: 720)
+        .navigationTitle("Surrealism")
         .onAppear { library.reload() }
     }
 
@@ -156,9 +193,7 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            Image(systemName: "moon.stars.fill")
-                .font(.system(size: 34))
-                .foregroundStyle(.purple, .indigo)
+            SurrealismMark(size: 46)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Surrealism")
                     .font(.system(size: 28, weight: .bold))
@@ -207,13 +242,6 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(library.isBusy)
-
-                Button {
-                    library.revealInFinder()
-                } label: {
-                    Label("Show in Finder", systemImage: "folder")
-                }
-                .buttonStyle(.bordered)
 
                 if library.isBusy {
                     ProgressView().scaleEffect(0.7)
@@ -297,42 +325,35 @@ struct ContentView: View {
                 .font(.title2).fontWeight(.semibold)
 
             GroupBox {
-                VStack(alignment: .leading, spacing: 12) {
-                    statusRow(
-                        on: pluginManager.isInstalled,
-                        onText: pluginManager.installedVersion.map { "Installed (v\($0))" } ?? "Installed",
-                        offText: "Not installed",
-                        busy: pluginManager.isLoading
-                    )
-                    statusRow(
-                        on: pluginManager.isActiveScreensaver,
-                        onText: "Active screensaver",
-                        offText: "Not the active screensaver",
-                        busy: pluginManager.isCheckingScreensaver
-                    )
+                VStack(alignment: .leading, spacing: 14) {
+                    if pluginManager.isActiveScreensaver {
+                        Label("Surrealism is your active screensaver", systemImage: "checkmark.seal.fill")
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(.green)
+                    } else {
+                        Text(pluginManager.isInstalled
+                             ? "Ready — make Surrealism your screensaver."
+                             : "Set Surrealism as your Mac screensaver.")
+                            .foregroundStyle(.secondary)
+                    }
 
                     if let error = pluginManager.lastError ?? pluginManager.screensaverError {
                         Text(error).font(.caption).foregroundStyle(.red)
                     }
 
                     HStack(spacing: 10) {
-                        if pluginManager.isInstalled {
-                            Button("Uninstall") { uninstall() }
-                                .buttonStyle(.bordered)
-                        } else {
-                            Button("Install Screensaver") { install() }
-                                .buttonStyle(.borderedProminent)
-                        }
-
-                        if pluginManager.isInstalled && !pluginManager.isActiveScreensaver {
-                            Button("Set as Screensaver") {
-                                Task { await pluginManager.enableAsScreensaver() }
+                        if !pluginManager.isActiveScreensaver {
+                            Button(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver") {
+                                setUpScreensaver()
                             }
                             .buttonStyle(.borderedProminent)
+                            .disabled(pluginManager.isLoading || pluginManager.isCheckingScreensaver)
                         }
-
-                        Button("System Settings…") { openScreenSaverSettings() }
+                        Button("Screen Saver Settings") { openScreenSaverSettings() }
                             .buttonStyle(.bordered)
+                        if pluginManager.isLoading || pluginManager.isCheckingScreensaver {
+                            ProgressView().scaleEffect(0.6)
+                        }
                         Spacer()
                     }
                 }
@@ -341,25 +362,12 @@ struct ContentView: View {
         }
     }
 
-    private func statusRow(on: Bool, onText: String, offText: String, busy: Bool) -> some View {
-        HStack(spacing: 8) {
-            Circle().fill(on ? Color.green : Color.gray).frame(width: 9, height: 9)
-            Text(on ? onText : offText)
-                .foregroundStyle(on ? .primary : .secondary)
-            if busy { ProgressView().scaleEffect(0.6) }
-            Spacer()
-        }
-        .font(.callout)
-    }
-
     // MARK: Store CTA
 
     private var storeSection: some View {
         GroupBox {
             HStack(spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 26))
-                    .foregroundStyle(.purple)
+                SurrealismMark(size: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Get the full surrealism.app library")
                         .fontWeight(.semibold)
@@ -379,14 +387,14 @@ struct ContentView: View {
 
     // MARK: Actions
 
-    private func install() {
-        do { try pluginManager.install() }
-        catch { logger.error("Install failed: \(error.localizedDescription, privacy: .public)") }
-    }
-
-    private func uninstall() {
-        do { try pluginManager.uninstall() }
-        catch { logger.error("Uninstall failed: \(error.localizedDescription, privacy: .public)") }
+    /// Installs (if needed) and activates the screensaver in one step.
+    private func setUpScreensaver() {
+        do {
+            if !pluginManager.isInstalled { try pluginManager.install() }
+            Task { await pluginManager.enableAsScreensaver() }
+        } catch {
+            logger.error("Setup failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func openScreenSaverSettings() {
