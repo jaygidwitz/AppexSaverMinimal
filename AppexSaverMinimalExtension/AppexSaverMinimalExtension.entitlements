@@ -12,5 +12,9 @@
 		<string>com.apple.CoreDisplay.master</string>
 		<string>com.apple.ViewBridgeAuxiliary</string>
 	</array>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
+	<array>
+		<string>/Users/Shared/</string>
+	</array>
 </dict>
 </plist>
