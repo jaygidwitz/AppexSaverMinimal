@@ -17,6 +17,7 @@ struct AppexSaverMinimalApp: App {
         WindowGroup {
             ContentView()
         }
+        .defaultSize(width: 720, height: 860)
 
         Window("Preview", id: "preview") {
             PreviewViewRepresentable()
