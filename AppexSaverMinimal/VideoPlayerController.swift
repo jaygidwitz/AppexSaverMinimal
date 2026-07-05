@@ -5,19 +5,13 @@
 //  Copyright © 2026. Licensed under the MIT License.
 //
 //  Shared video playback engine used by BOTH the screensaver extension
-//  (AppexSaverMinimalView) and the host app's preview (PreviewView), so the two
-//  render identically. Mirrors the dual-target-membership pattern of
-//  RainbowAnimator (see CLAUDE.md): this file physically lives in the host-app
-//  folder but is compiled into both targets.
+//  (AppexSaverMinimalView) and the host app's preview (PreviewView). Mirrors the
+//  dual-target-membership pattern of RainbowAnimator (see CLAUDE.md).
 //
-//  Playback model (see docs/plans/2026-07-05-001-feat-video-screensaver-plan.md,
-//  KTD "Multi-clip rotation via observe-end + cross-fade"):
-//    - One clip  -> AVPlayerLooper (gapless at rate 1.0).
-//    - Many clips -> reuse a single AVQueuePlayer, observe end-of-item, swap the
-//      item, and mask the boundary with an opacity fade on the AVPlayerLayer.
-//  A single AVQueuePlayer is reused for the controller's lifetime (never a new
-//  player per clip) and every observer is torn down on each transition to avoid
-//  the memory creep / double-fire that plague AVPlayer rotation.
+//  Rotation uses a TRUE cross-fade across two AVPlayerLayers: the next clip is
+//  brought up on the idle layer and faded in while the current layer fades out,
+//  so there is always a frame on screen — no black gap / blink at the boundary.
+//  A single clip loops gaplessly via AVPlayerLooper.
 //
 
 import AppKit
@@ -29,12 +23,9 @@ import QuartzCore
 enum VideoCache {
     static let directory = "/Users/Shared/AppexSaverMinimal/videos"
 
-    /// Playable video files currently in the cache, sorted deterministically.
     static func videos() -> [URL] {
         let exts: Set<String> = ["mp4", "mov", "m4v"]
-        guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory) else {
-            return []
-        }
+        guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory) else { return [] }
         let base = URL(fileURLWithPath: directory, isDirectory: true)
         return names
             .filter { exts.contains(($0 as NSString).pathExtension.lowercased()) }
@@ -45,148 +36,161 @@ enum VideoCache {
 
 final class VideoPlayerController {
 
+    private struct Slot {
+        let player: AVQueuePlayer
+        let layer: AVPlayerLayer
+    }
+
     private let playlist: [URL]
-    private let fadeDuration: TimeInterval = 1.2
+    private let fadeDuration: TimeInterval = 1.4
 
-    private let queuePlayer = AVQueuePlayer()
-    private var playerLayer: AVPlayerLayer?
-    private weak var parentLayer: CALayer?
-
-    private var looper: AVPlayerLooper?            // single-clip path only
-    private var endObserver: NSObjectProtocol?
-    private var timeObserver: Any?
-    private var wakeObserver: NSObjectProtocol?
-
+    private var slots: [Slot] = []
+    private var active = 0
     private var index = 0
-    private var isFadingOut = false
     private var started = false
+    private var transitioning = false
 
-    /// `true` when there is at least one playable video.
+    private var looper: AVPlayerLooper?
+    private var timeObserver: Any?
+    private var observedPlayer: AVQueuePlayer?
+    private var endObserver: NSObjectProtocol?
+    private var wakeObserver: NSObjectProtocol?
+    private var pendingFinish: DispatchWorkItem?
+
     var hasVideos: Bool { !playlist.isEmpty }
 
     init(videos: [URL], shuffle: Bool = true) {
         self.playlist = shuffle ? videos.shuffled() : videos
-        queuePlayer.isMuted = true
-        queuePlayer.actionAtItemEnd = .none
     }
 
     deinit { stop() }
 
     // MARK: - Attachment
 
-    /// Creates the AVPlayerLayer and inserts it at the bottom of `layer`.
     func attach(to layer: CALayer) {
-        parentLayer = layer
         layer.backgroundColor = NSColor.black.cgColor
         layer.isOpaque = true
-
-        let pLayer = AVPlayerLayer(player: queuePlayer)
-        pLayer.frame = layer.bounds
-        pLayer.videoGravity = .resizeAspectFill
-        pLayer.backgroundColor = NSColor.black.cgColor
-        pLayer.opacity = 0                      // fade the first clip in
-        layer.insertSublayer(pLayer, at: 0)
-        playerLayer = pLayer
+        for _ in 0..<2 {
+            let player = AVQueuePlayer()
+            player.isMuted = true
+            player.actionAtItemEnd = .pause
+            let pLayer = AVPlayerLayer(player: player)
+            pLayer.frame = layer.bounds
+            pLayer.videoGravity = .resizeAspectFill
+            pLayer.backgroundColor = NSColor.black.cgColor
+            pLayer.opacity = 0
+            layer.addSublayer(pLayer)
+            slots.append(Slot(player: player, layer: pLayer))
+        }
     }
 
     func updateBounds(_ bounds: CGRect) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        playerLayer?.frame = bounds
+        slots.forEach { $0.layer.frame = bounds }
         CATransaction.commit()
     }
 
     // MARK: - Lifecycle
 
     func start() {
-        guard hasVideos, !started else { return }
+        guard hasVideos, !started, !slots.isEmpty else { return }
         started = true
-
         installWakeObserver()
 
         if playlist.count == 1 {
-            startSingleClipLoop(playlist[0])
+            let slot = slots[active]
+            looper = AVPlayerLooper(player: slot.player, templateItem: AVPlayerItem(url: playlist[0]))
+            slot.player.play()
+            fade(slot.layer, to: 1)
         } else {
-            playCurrentItem(fadeIn: true)
+            index = 0
+            let slot = slots[active]
+            load(playlist[index], into: slot)
+            slot.player.play()
+            fade(slot.layer, to: 1)
+            watchForEnd(of: slot)
         }
     }
 
     func stop() {
         started = false
-        queuePlayer.pause()
-        looper?.disableLooping()
-        looper = nil
-        removeItemObservers()
-        if let wakeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
-            self.wakeObserver = nil
+        transitioning = false
+        pendingFinish?.cancel(); pendingFinish = nil
+        looper?.disableLooping(); looper = nil
+        removeTimeObserver()
+        if let endObserver { NotificationCenter.default.removeObserver(endObserver); self.endObserver = nil }
+        if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver); self.wakeObserver = nil }
+        slots.forEach { $0.player.pause(); $0.player.removeAllItems() }
+    }
+
+    // MARK: - Rotation with cross-fade
+
+    private func load(_ url: URL, into slot: Slot) {
+        slot.player.removeAllItems()
+        slot.player.insert(AVPlayerItem(url: url), after: nil)
+    }
+
+    /// Watch the active clip and begin the cross-fade `fadeDuration` before it ends
+    /// (or immediately if it ends first).
+    private func watchForEnd(of slot: Slot) {
+        removeTimeObserver()
+        observedPlayer = slot.player
+
+        let interval = CMTime(seconds: 0.25, preferredTimescale: 600)
+        timeObserver = slot.player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] _ in
+            guard let self, self.started, !self.transitioning,
+                  let item = slot.player.currentItem, item.status == .readyToPlay else { return }
+            let duration = item.duration.seconds
+            let current = item.currentTime().seconds
+            guard duration.isFinite, duration > 0 else { return }
+            if duration - current <= self.fadeDuration {
+                self.beginTransition()
+            }
         }
-        queuePlayer.removeAllItems()
-    }
 
-    // MARK: - Single clip (gapless loop)
-
-    private func startSingleClipLoop(_ url: URL) {
-        let item = AVPlayerItem(url: url)
-        looper = AVPlayerLooper(player: queuePlayer, templateItem: item)
-        queuePlayer.play()
-        fade(to: 1)
-    }
-
-    // MARK: - Playlist rotation (fade between clips)
-
-    private func playCurrentItem(fadeIn: Bool) {
-        removeItemObservers()
-        queuePlayer.removeAllItems()
-
-        let url = playlist[index]
-        let item = AVPlayerItem(url: url)
-        queuePlayer.insert(item, after: nil)
-
-        isFadingOut = false
-        playerLayer?.opacity = fadeIn ? 0 : 1
-        queuePlayer.play()
-        if fadeIn { fade(to: 1) }
-
-        // Advance when this item finishes.
+        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         endObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: item,
-            queue: .main
+            forName: .AVPlayerItemDidPlayToEndTime, object: slot.player.currentItem, queue: .main
         ) { [weak self] _ in
-            self?.advance()
-        }
-
-        // Start the fade-out during the final `fadeDuration` seconds.
-        let interval = CMTime(seconds: 0.2, preferredTimescale: 600)
-        timeObserver = queuePlayer.addPeriodicTimeObserver(
-            forInterval: interval, queue: .main
-        ) { [weak self] _ in
-            self?.maybeFadeOut(item)
+            self?.beginTransition()   // safety: clip shorter than fadeDuration
         }
     }
 
-    private func maybeFadeOut(_ item: AVPlayerItem) {
-        guard !isFadingOut, item.status == .readyToPlay else { return }
-        let duration = item.duration.seconds
-        let current = item.currentTime().seconds
-        guard duration.isFinite, duration > 0 else { return }
-        if duration - current <= fadeDuration {
-            isFadingOut = true
-            fade(to: 0)
+    private func beginTransition() {
+        guard started, !transitioning, playlist.count > 1 else { return }
+        transitioning = true
+        removeTimeObserver()
+
+        let current = slots[active]
+        let next = slots[1 - active]
+        let nextIndex = (index + 1) % playlist.count
+
+        load(playlist[nextIndex], into: next)
+        next.layer.opacity = 0
+        next.player.seek(to: .zero)
+        next.player.play()
+
+        // Cross-fade
+        fade(next.layer, to: 1)
+        fade(current.layer, to: 0)
+
+        let finish = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            current.player.pause()
+            current.player.removeAllItems()
+            self.active = 1 - self.active
+            self.index = nextIndex
+            self.transitioning = false
+            if self.started { self.watchForEnd(of: self.slots[self.active]) }
         }
+        pendingFinish = finish
+        DispatchQueue.main.asyncAfter(deadline: .now() + fadeDuration, execute: finish)
     }
 
-    private func advance() {
-        guard started else { return }
-        index = (index + 1) % playlist.count
-        playCurrentItem(fadeIn: true)
-    }
+    // MARK: - Fade
 
-    // MARK: - Fade helper
-
-    private func fade(to opacity: Float) {
-        guard let layer = playerLayer else { return }
+    private func fade(_ layer: CALayer, to opacity: Float) {
         let animation = CABasicAnimation(keyPath: "opacity")
         animation.fromValue = layer.presentation()?.opacity ?? layer.opacity
         animation.toValue = opacity
@@ -199,36 +203,32 @@ final class VideoPlayerController {
 
     // MARK: - Observers
 
-    private func removeItemObservers() {
-        if let endObserver {
-            NotificationCenter.default.removeObserver(endObserver)
-            self.endObserver = nil
+    private func removeTimeObserver() {
+        if let timeObserver, let observedPlayer {
+            observedPlayer.removeTimeObserver(timeObserver)
         }
-        if let timeObserver {
-            queuePlayer.removeTimeObserver(timeObserver)
-            self.timeObserver = nil
-        }
+        timeObserver = nil
+        observedPlayer = nil
     }
 
     private func installWakeObserver() {
         guard wakeObserver == nil else { return }
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didWakeNotification,
-            object: nil,
-            queue: .main
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             guard let self, self.started else { return }
-            if self.queuePlayer.currentItem == nil {
-                // Queue drained during sleep — restart from the current clip.
+            let slot = self.slots[self.active]
+            if slot.player.currentItem == nil {
                 if self.playlist.count == 1 {
-                    self.startSingleClipLoop(self.playlist[0])
+                    self.looper?.disableLooping()
+                    self.looper = AVPlayerLooper(player: slot.player, templateItem: AVPlayerItem(url: self.playlist[0]))
                 } else {
-                    self.playCurrentItem(fadeIn: true)
+                    self.load(self.playlist[self.index], into: slot)
+                    self.watchForEnd(of: slot)
                 }
+                slot.player.play()
             } else {
-                // Nudge the layer so it refreshes on wake.
-                self.queuePlayer.pause()
-                self.queuePlayer.play()
+                slot.player.pause(); slot.player.play()   // nudge the layer awake
             }
         }
     }
