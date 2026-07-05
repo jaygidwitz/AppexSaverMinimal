@@ -19,6 +19,8 @@
 		1A000032000000000000000A /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000032000000000000000B /* PluginManager.swift */; };
 		1A000060000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
 		1A000061000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
+		F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
+		F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
 		1A000062000000000000000A /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000062000000000000000B /* PreviewView.swift */; };
 		1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000063000000000000000B /* PreviewViewRepresentable.swift */; };
 		1A000066000000000000000A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000064000000000000000B /* Logger.swift */; };
@@ -70,6 +72,7 @@
 		1A000032000000000000000B /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		1A000050000000000000000B /* BuildNumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BuildNumber.xcconfig; sourceTree = "<group>"; };
 		1A000060000000000000000B /* RainbowAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainbowAnimator.swift; sourceTree = "<group>"; };
+		F00DCAFE0000000000000003 /* VideoPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerController.swift; sourceTree = "<group>"; };
 		1A000062000000000000000B /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 		1A000063000000000000000B /* PreviewViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewRepresentable.swift; sourceTree = "<group>"; };
 		1A000064000000000000000B /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
@@ -114,6 +117,7 @@
 				1A000002000000000000000B /* ContentView.swift */,
 				1A000032000000000000000B /* PluginManager.swift */,
 				1A000060000000000000000B /* RainbowAnimator.swift */,
+				F00DCAFE0000000000000003 /* VideoPlayerController.swift */,
 				1A000062000000000000000B /* PreviewView.swift */,
 				1A000063000000000000000B /* PreviewViewRepresentable.swift */,
 				1A00000A000000000000000B /* Info.plist */,
@@ -303,6 +307,7 @@
 				1A000032000000000000000A /* PluginManager.swift in Sources */,
 				1A000066000000000000000A /* Logger.swift in Sources */,
 				1A000060000000000000000A /* RainbowAnimator.swift in Sources */,
+				F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */,
 				1A000062000000000000000A /* PreviewView.swift in Sources */,
 				1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */,
 			);
@@ -318,6 +323,7 @@
 				1A000030000000000000000A /* AppexSaverMinimalConfigurationViewController.swift in Sources */,
 				1A000067000000000000000A /* Logger.swift in Sources */,
 				1A000061000000000000000A /* RainbowAnimator.swift in Sources */,
+				F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

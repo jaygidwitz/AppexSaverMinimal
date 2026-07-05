@@ -2,34 +2,26 @@
 //  AppexSaverMinimalView.swift
 //  AppexSaverMinimalExtension
 //
-//  Copyright © 2026 Guillaume Louel. Licensed under the MIT License.
+//  Copyright © 2026. Licensed under the MIT License.
 //
-//  ScreenSaverView that displays the rainbow color animation, OR — as of the
-//  U12 risk-retirement spike — plays the first video found in the shared cache
-//  at /Users/Shared/AppexSaverMinimal/videos.
+//  ScreenSaverView that plays the cached video library via the shared
+//  VideoPlayerController (rotating through clips with fade transitions), and
+//  falls back to the RainbowAnimator when the cache is empty.
 //
-//  ⚠️ U12 SPIKE SCAFFOLDING. The video path below is intentionally minimal: it
-//  exists only to prove that a *notarized, sandboxed* extension can read a
-//  world-readable file from /Users/Shared at the login window / lock screen.
-//  It will be replaced by the real shared VideoPlayerController (U1) reading
-//  through VideoCache (U2), wired in via U3. Do not build on it.
+//  Lifecycle is driven from viewDidMoveToWindow — in the .appex context
+//  startAnimation()/stopAnimation() are not reliably called. SSENeedsAnimationTimer
+//  stays false: AVPlayer renders off its own display link.
 //
 
 import ScreenSaver
 import QuartzCore
-import AVFoundation
 
 private let logger = AppexLog.logger("View")
 
 final class AppexSaverMinimalView: ScreenSaverView {
 
     private let animator = RainbowAnimator()
-
-    // MARK: - U12 spike: shared-cache video playback
-    private static let spikeCacheDirectory = "/Users/Shared/AppexSaverMinimal/videos"
-    private var playerLayer: AVPlayerLayer?
-    private var queuePlayer: AVQueuePlayer?
-    private var looper: AVPlayerLooper?
+    private var video: VideoPlayerController?
 
     override init?(frame: NSRect, isPreview: Bool) {
         logger.info("init(frame: \(frame.size.width, privacy: .public)x\(frame.size.height, privacy: .public), isPreview: \(isPreview))")
@@ -45,114 +37,69 @@ final class AppexSaverMinimalView: ScreenSaverView {
 
     deinit {
         animator.stop()
-        teardownVideo()
-        logger.info("deinit")
+        video?.stop()
     }
-
-    // MARK: - Layer Setup
 
     override func makeBackingLayer() -> CALayer {
         let layer = CALayer()
-        layer.backgroundColor = animator.currentBackgroundColor.cgColor
+        layer.backgroundColor = NSColor.black.cgColor
         layer.isOpaque = true
         return layer
     }
 
-    // MARK: - ScreenSaverView Overrides
-    //
-    // These are called by the framework. We rely on viewDidMoveToWindow to
-    // start/stop rendering (robust across both ScreenSaverEngine and System
-    // Settings preview), but the overrides remain so the framework can drive
-    // them if it wants to.
+    // MARK: - ScreenSaverView overrides (kept so the framework can drive them)
 
     override func startAnimation() {
-        logger.info("startAnimation()")
         super.startAnimation()
-        animator.start()
+        renderIfPossible()
     }
 
     override func stopAnimation() {
-        logger.info("stopAnimation()")
+        video?.stop()
         animator.stop()
         super.stopAnimation()
     }
 
-    // MARK: - View Lifecycle
+    // MARK: - View lifecycle (primary driver)
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        logger.info("viewDidMoveToWindow() hasWindow=\(self.window != nil)")
-
-        guard self.window != nil, let layer = self.layer else {
-            animator.stop()
-            teardownVideo()
-            return
-        }
-
-        // U12 spike: prefer a cached video; fall back to the rainbow if none.
-        if let videoURL = Self.firstCachedVideoURL() {
-            logger.info("U12 spike: playing cached video \(videoURL.lastPathComponent, privacy: .public)")
-            animator.stop()
-            setupVideo(url: videoURL, in: layer)
+        if window != nil {
+            renderIfPossible()
         } else {
-            logger.info("U12 spike: no cached video found at \(Self.spikeCacheDirectory, privacy: .public); using rainbow fallback")
-            teardownVideo()
-            animator.attach(to: layer)
-            animator.updateBounds(bounds)
-            animator.start()
+            video?.stop()
+            animator.stop()
         }
     }
 
     override func layout() {
         super.layout()
+        video?.updateBounds(bounds)
         animator.updateBounds(bounds)
-        playerLayer?.frame = bounds
     }
 
-    // MARK: - U12 spike helpers
+    // MARK: - Rendering
 
-    /// Returns the first playable file in the shared cache directory, or nil.
-    private static func firstCachedVideoURL() -> URL? {
-        let dir = URL(fileURLWithPath: spikeCacheDirectory, isDirectory: true)
-        let exts: Set<String> = ["mp4", "mov", "m4v"]
-        guard let names = try? FileManager.default.contentsOfDirectory(atPath: spikeCacheDirectory) else {
-            return nil
+    private func renderIfPossible() {
+        guard window != nil, let layer = self.layer else { return }
+
+        let cached = VideoCache.videos()
+        if !cached.isEmpty {
+            animator.stop()
+            if video == nil {
+                let controller = VideoPlayerController(videos: cached)
+                controller.attach(to: layer)
+                controller.updateBounds(bounds)
+                video = controller
+            }
+            logger.info("Playing \(cached.count, privacy: .public) cached video(s)")
+            video?.start()
+        } else {
+            video?.stop()
+            logger.info("No cached videos; using rainbow fallback")
+            animator.attach(to: layer)
+            animator.updateBounds(bounds)
+            animator.start()
         }
-        return names
-            .filter { exts.contains(($0 as NSString).pathExtension.lowercased()) }
-            .sorted()
-            .first
-            .map { dir.appendingPathComponent($0) }
-    }
-
-    private func setupVideo(url: URL, in layer: CALayer) {
-        teardownVideo()
-
-        layer.backgroundColor = NSColor.black.cgColor
-        layer.isOpaque = true
-
-        let item = AVPlayerItem(url: url)
-        let player = AVQueuePlayer()
-        player.isMuted = true
-        looper = AVPlayerLooper(player: player, templateItem: item)
-
-        let pLayer = AVPlayerLayer(player: player)
-        pLayer.frame = bounds
-        pLayer.videoGravity = .resizeAspectFill
-        pLayer.backgroundColor = NSColor.black.cgColor
-        layer.addSublayer(pLayer)
-
-        queuePlayer = player
-        playerLayer = pLayer
-        player.play()
-    }
-
-    private func teardownVideo() {
-        queuePlayer?.pause()
-        looper?.disableLooping()
-        looper = nil
-        playerLayer?.removeFromSuperlayer()
-        playerLayer = nil
-        queuePlayer = nil
     }
 }
