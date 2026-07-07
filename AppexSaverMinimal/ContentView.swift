@@ -264,6 +264,21 @@ struct ContentView: View {
                 .padding(28)
                 .shadow(color: .black.opacity(0.5), radius: 8, y: 1)
             }
+            .overlay(alignment: .bottomTrailing) {
+                if !library.videos.isEmpty {
+                    Button {
+                        FullScreenPlayer.playPlaylist(urls: library.videos.map(\.url), title: "Surrealism")
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.fill")
+                            Text("Play all")
+                        }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .padding(28)
+                    .help("Play the whole library full screen")
+                }
+            }
             .clipped()
     }
 
