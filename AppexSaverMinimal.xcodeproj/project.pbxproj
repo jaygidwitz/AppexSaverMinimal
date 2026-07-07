@@ -25,9 +25,12 @@
 		1A000066000000000000000A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000064000000000000000B /* Logger.swift */; };
 		1A000067000000000000000A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000064000000000000000B /* Logger.swift */; };
 		1A000070000000000000000A /* PaperSaverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A000070000000000000000B /* PaperSaverKit */; };
+		5EC031D25CB2A74F1F915E5F /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D757FDC426E58CBD6258CD3 /* CatalogView.swift */; };
 		702CE2326462B98F0B846FBB /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117054DF587FF85776463AC /* Keychain.swift */; };
 		79994C6B6D83A8460E66F813 /* CommerceAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */; };
 		7EC2E35F3A27D44AEFB3D283 /* DeviceID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817F8D7F70648C542BBB903B /* DeviceID.swift */; };
+		A86642010A97C9D6E31E85EF /* LoopDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */; };
+		AA249D5B8005D39FAAAA7F18 /* CatalogModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF4827F4E204670BAA1AC8C /* CatalogModel.swift */; };
 		D06FB26D3C0344E4FD0FF71A /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843AF486688D3BBEC398EB87 /* LicenseStore.swift */; };
 		F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
 		F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
@@ -81,7 +84,10 @@
 		1A000062000000000000000B /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 		1A000063000000000000000B /* PreviewViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewRepresentable.swift; sourceTree = "<group>"; };
 		1A000064000000000000000B /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		1D757FDC426E58CBD6258CD3 /* CatalogView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
+		4AF4827F4E204670BAA1AC8C /* CatalogModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CatalogModel.swift; sourceTree = "<group>"; };
 		5117054DF587FF85776463AC /* Keychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LoopDownloader.swift; sourceTree = "<group>"; };
 		5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommerceAPI.swift; sourceTree = "<group>"; };
 		817F8D7F70648C542BBB903B /* DeviceID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceID.swift; sourceTree = "<group>"; };
 		843AF486688D3BBEC398EB87 /* LicenseStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LicenseStore.swift; sourceTree = "<group>"; };
@@ -197,6 +203,9 @@
 				5117054DF587FF85776463AC /* Keychain.swift */,
 				843AF486688D3BBEC398EB87 /* LicenseStore.swift */,
 				8B885BA01AB09A9B515644AF /* LicenseView.swift */,
+				5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */,
+				4AF4827F4E204670BAA1AC8C /* CatalogModel.swift */,
+				1D757FDC426E58CBD6258CD3 /* CatalogView.swift */,
 			);
 			name = Commerce;
 			path = Commerce;
@@ -343,6 +352,9 @@
 				702CE2326462B98F0B846FBB /* Keychain.swift in Sources */,
 				D06FB26D3C0344E4FD0FF71A /* LicenseStore.swift in Sources */,
 				19AD6622F4D263AFBBA27321 /* LicenseView.swift in Sources */,
+				A86642010A97C9D6E31E85EF /* LoopDownloader.swift in Sources */,
+				AA249D5B8005D39FAAAA7F18 /* CatalogModel.swift in Sources */,
+				5EC031D25CB2A74F1F915E5F /* CatalogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

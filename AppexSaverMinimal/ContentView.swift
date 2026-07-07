@@ -186,6 +186,8 @@ struct ContentView: View {
     @StateObject private var pluginManager = PluginManager()
     @StateObject private var library = LibraryViewModel()
     @StateObject private var license = LicenseStore()
+    @StateObject private var catalog = CatalogModel()
+    @StateObject private var downloader = LoopDownloader()
     @State private var previewToken = 0
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
@@ -203,6 +205,8 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         librarySection
                         LicenseView(store: license)
+                        CatalogView(model: catalog, downloader: downloader,
+                                    onLibraryChanged: { library.reload() })
                         screensaverSection
                         storeSection
                     }
