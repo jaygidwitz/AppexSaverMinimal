@@ -67,32 +67,15 @@ final class LoopDownloader: ObservableObject {
         try? FileManager.default.removeItem(at: destination(for: loopId))
     }
 
-    /// One-time first-run setup: archive any pre-existing large loops in the cache
-    /// (e.g. the old multi-GB ProRes) out of the playback folder, then auto-download
-    /// the free samples so a fresh install has playable loops immediately.
+    /// One-time first-run setup: auto-download the free samples so a fresh install
+    /// has playable loops in the screensaver immediately.
     func firstRunSetupIfNeeded(catalogSamples: [CatalogLoop]) async {
         let flag = "app.surrealism.didFirstRunSetup"
         guard !UserDefaults.standard.bool(forKey: flag) else { return }
-        archiveLegacyLoops()
         for sample in catalogSamples where !isDownloaded(sample.id) {
             await download(sample)
         }
         UserDefaults.standard.set(true, forKey: flag)
-    }
-
-    /// Move any cache file NOT named `loop-*` (the old ProRes masters) into a sibling
-    /// `archive/` folder — kept, not deleted, and out of the screensaver's playback set.
-    private func archiveLegacyLoops() {
-        let fm = FileManager.default
-        let archive = cacheDir.deletingLastPathComponent().appendingPathComponent("archive")
-        guard let items = try? fm.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: nil) else { return }
-        for url in items {
-            let ext = url.pathExtension.lowercased()
-            guard ext == "mp4" || ext == "mov" || ext == "m4v" else { continue }
-            guard !url.lastPathComponent.hasPrefix("loop-") else { continue }
-            try? fm.createDirectory(at: archive, withIntermediateDirectories: true)
-            try? fm.moveItem(at: url, to: archive.appendingPathComponent(url.lastPathComponent))
-        }
     }
 
     // MARK: - Private

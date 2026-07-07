@@ -326,6 +326,13 @@ struct ContentView: View {
                 .frame(height: 124).frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.08)))
+                .overlay(alignment: .center) {
+                    Image(systemName: "play.circle.fill").font(.system(size: 30))
+                        .foregroundStyle(.white.opacity(0.9)).shadow(radius: 5)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 10))
+                .onTapGesture { FullScreenPlayer.play(url: video.url, title: video.displayName) }
+                .help("Click to play full screen")
 
                 Button(role: .destructive) {
                     library.remove(video) { bumpPreview() }
