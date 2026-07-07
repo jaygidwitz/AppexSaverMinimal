@@ -36,15 +36,32 @@ struct CatalogView: View {
 
     @ViewBuilder private func card(_ loop: CatalogLoop) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06))
-                .frame(height: 96)
-                .overlay(alignment: .topTrailing) { badge(loop).padding(6) }
-                .overlay { if !loop.entitled && !loop.isSample { Image(systemName: "lock.fill").foregroundStyle(.white.opacity(0.5)) } }
+            thumbnail(loop)
             Text(loop.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
             actionRow(loop)
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.04)))
+    }
+
+    @ViewBuilder private func thumbnail(_ loop: CatalogLoop) -> some View {
+        AsyncImage(url: loop.poster.flatMap { URL(string: $0) }) { phase in
+            if let image = phase.image {
+                image.resizable().aspectRatio(contentMode: .fill)
+            } else {
+                Rectangle().fill(.white.opacity(0.06))
+            }
+        }
+        .frame(height: 110)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(alignment: .topTrailing) { badge(loop).padding(6) }
+        .overlay {
+            if !loop.entitled && !loop.isSample {
+                Image(systemName: "lock.fill")
+                    .font(.title3).foregroundStyle(.white).shadow(radius: 4)
+            }
+        }
     }
 
     @ViewBuilder private func badge(_ loop: CatalogLoop) -> some View {
