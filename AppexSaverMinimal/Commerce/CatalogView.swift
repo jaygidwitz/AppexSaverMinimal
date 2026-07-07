@@ -13,6 +13,8 @@ struct CatalogView: View {
     @ObservedObject var downloader: LoopDownloader
     var onLibraryChanged: () -> Void = {}
 
+    @State private var hoveredId: String?
+
     private let columns = [GridItem(.adaptive(minimum: 200), spacing: 14)]
     private let storeURL = URL(string: "https://surrealism.app")!
 
@@ -31,7 +33,11 @@ struct CatalogView: View {
                 ForEach(model.loops) { loop in card(loop) }
             }
         }
-        .task { await model.load() }
+        .task {
+            await model.load()
+            await downloader.firstRunSetupIfNeeded(catalogSamples: model.loops.filter { $0.isSample })
+            onLibraryChanged()
+        }
     }
 
     @ViewBuilder private func card(_ loop: CatalogLoop) -> some View {
@@ -56,6 +62,14 @@ struct CatalogView: View {
         .frame(height: 110)
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            // Animated preview on hover (streams a short clip from the site).
+            if hoveredId == loop.id {
+                LoopPreviewView(url: previewURL(loop))
+                    .allowsHitTesting(false)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
         .overlay(alignment: .topTrailing) { badge(loop).padding(6) }
         .overlay {
             if !loop.entitled && !loop.isSample {
@@ -65,15 +79,24 @@ struct CatalogView: View {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 34)).foregroundStyle(.white.opacity(0.92))
                     .shadow(radius: 6)
+                    .opacity(hoveredId == loop.id ? 0 : 1)
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onHover { inside in
+            if inside { hoveredId = loop.id }
+            else if hoveredId == loop.id { hoveredId = nil }
+        }
         .onTapGesture {
             if downloaded, let url = downloader.localURL(for: loop.id) {
                 FullScreenPlayer.play(url: url, title: loop.title)
             }
         }
         .help(downloaded ? "Click to play full screen" : "")
+    }
+
+    private func previewURL(_ loop: CatalogLoop) -> URL {
+        CommerceAPI.baseURL.appendingPathComponent("media/previews/\(loop.id).mp4")
     }
 
     @ViewBuilder private func badge(_ loop: CatalogLoop) -> some View {
