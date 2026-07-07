@@ -39,7 +39,11 @@ final class LoopDownloader: ObservableObject {
     }
 
     func download(_ loop: CatalogLoop) async {
-        guard let key = keychain.load() else { errors[loop.id] = "No license on this device."; return }
+        let key = keychain.load()
+        if key == nil && !loop.isSample {                        // paid loops need a license; samples don't
+            errors[loop.id] = "No license on this device."
+            return
+        }
         downloading.insert(loop.id)
         errors[loop.id] = nil
         defer { downloading.remove(loop.id) }
@@ -59,8 +63,8 @@ final class LoopDownloader: ObservableObject {
 
     // MARK: - Private
 
-    private func attempt(_ loop: CatalogLoop, key: String) async throws {
-        let grant = try await authorizer.authorize(key: key, deviceId: deviceId, loopId: loop.id)
+    private func attempt(_ loop: CatalogLoop, key: String?) async throws {
+        let grant = try await authorizer.authorize(key: key, deviceId: key == nil ? nil : deviceId, loopId: loop.id)
         guard let url = URL(string: grant.url) else { throw CommerceError.malformed }
 
         try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)

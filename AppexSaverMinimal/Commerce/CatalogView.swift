@@ -75,9 +75,11 @@ struct CatalogView: View {
             }
         } else if downloader.downloading.contains(loop.id) {
             HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Downloading…").font(.caption).foregroundStyle(.secondary) }
-        } else if loop.entitled {
-            Button("Download") { Task { await downloader.download(loop); onLibraryChanged() } }
-                .buttonStyle(PrimaryButtonStyle())
+        } else if loop.entitled || loop.isSample {
+            Button(loop.isSample && !loop.entitled ? "Download sample" : "Download") {
+                Task { await downloader.download(loop); onLibraryChanged() }
+            }
+            .buttonStyle(PrimaryButtonStyle())
         } else {
             Link("Unlock →", destination: storeURL).font(.caption).foregroundStyle(.secondary)
         }

@@ -107,7 +107,8 @@ struct DownloadGrant: Decodable {
 }
 
 protocol DownloadAuthorizing {
-    func authorize(key: String, deviceId: String, loopId: String) async throws -> DownloadGrant
+    /// key/deviceId are optional — free sample loops need no license.
+    func authorize(key: String?, deviceId: String?, loopId: String) async throws -> DownloadGrant
 }
 
 enum DownloadError: Error { case denied(Int), checksumMismatch, urlExpired }
@@ -116,11 +117,14 @@ struct LiveDownloadAuthorizer: DownloadAuthorizing {
     var session: URLSession = .shared
     var baseURL: URL = CommerceAPI.baseURL
 
-    func authorize(key: String, deviceId: String, loopId: String) async throws -> DownloadGrant {
+    func authorize(key: String?, deviceId: String?, loopId: String) async throws -> DownloadGrant {
         var request = URLRequest(url: baseURL.appendingPathComponent("v1/download"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["key": key, "deviceId": deviceId, "loopId": loopId])
+        var payload: [String: String] = ["loopId": loopId]
+        if let key { payload["key"] = key }
+        if let deviceId { payload["deviceId"] = deviceId }
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         request.timeoutInterval = 20
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw CommerceError.malformed }
