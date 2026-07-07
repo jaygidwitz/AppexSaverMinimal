@@ -13,6 +13,12 @@ import AppKit
 
 final class PreviewView: NSView {
 
+    /// The host app's hero sits at the top of a dark-violet backdrop. Use that
+    /// same color as the pre-playback fill so the hero doesn't flash BLACK while
+    /// the first AVPlayerLayer is still transparent (opacity 0 until .readyToPlay).
+    /// The fullscreen extension keeps black — that's `VideoPlayerController`'s job.
+    static let heroPlaceholder = NSColor(red: 0.09, green: 0.05, blue: 0.17, alpha: 1)
+
     private let animator = RainbowAnimator()
     private var video: VideoPlayerController?
 
@@ -28,7 +34,7 @@ final class PreviewView: NSView {
 
     override func makeBackingLayer() -> CALayer {
         let layer = CALayer()
-        layer.backgroundColor = NSColor.black.cgColor
+        layer.backgroundColor = Self.heroPlaceholder.cgColor
         layer.isOpaque = true
         return layer
     }
@@ -60,10 +66,13 @@ final class PreviewView: NSView {
             animator.stop()
             if video == nil {
                 let controller = VideoPlayerController(videos: cached)
-                controller.attach(to: layer)
+                controller.attach(to: layer)   // sets the layer black for fullscreen use…
                 controller.updateBounds(bounds)
                 video = controller
             }
+            // …but in the host preview, keep the backdrop-matched fill so the
+            // load gap (before the first frame fades in) doesn't read as black.
+            layer.backgroundColor = Self.heroPlaceholder.cgColor
             video?.start()
         } else {
             video?.stop()
