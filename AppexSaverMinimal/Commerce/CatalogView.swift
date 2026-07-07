@@ -52,13 +52,7 @@ struct CatalogView: View {
 
     @ViewBuilder private func thumbnail(_ loop: CatalogLoop) -> some View {
         let downloaded = downloader.isDownloaded(loop.id)
-        AsyncImage(url: loop.poster.flatMap { URL(string: $0) }) { phase in
-            if let image = phase.image {
-                image.resizable().aspectRatio(contentMode: .fill)
-            } else {
-                Rectangle().fill(.white.opacity(0.06))
-            }
-        }
+        CachedPoster(url: loop.poster.flatMap { URL(string: $0) })
         .frame(height: 110)
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -139,5 +133,36 @@ struct CatalogView: View {
             Link("Unlock →", destination: storeURL).font(.caption).foregroundStyle(.secondary)
         }
         if let e = downloader.errors[loop.id] { Text(e).font(.caption2).foregroundStyle(.orange) }
+    }
+}
+
+/// Poster image cached in memory so catalog re-renders (e.g. when a download
+/// finishes) don't re-fetch every poster and flash. Loads once per URL.
+private enum PosterCache {
+    static let shared = NSCache<NSURL, NSImage>()
+}
+
+struct CachedPoster: View {
+    let url: URL?
+    @State private var image: NSImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+            } else {
+                Rectangle().fill(.white.opacity(0.06))
+            }
+        }
+        .task(id: url) { await load() }
+    }
+
+    private func load() async {
+        guard let url else { return }
+        if let cached = PosterCache.shared.object(forKey: url as NSURL) { image = cached; return }
+        guard let (data, _) = try? await URLSession.shared.data(from: url),
+              let img = NSImage(data: data) else { return }
+        PosterCache.shared.setObject(img, forKey: url as NSURL)
+        image = img
     }
 }
