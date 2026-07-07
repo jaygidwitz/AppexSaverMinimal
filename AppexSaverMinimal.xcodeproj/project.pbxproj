@@ -31,6 +31,7 @@
 		7EC2E35F3A27D44AEFB3D283 /* DeviceID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817F8D7F70648C542BBB903B /* DeviceID.swift */; };
 		A86642010A97C9D6E31E85EF /* LoopDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */; };
 		AA249D5B8005D39FAAAA7F18 /* CatalogModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF4827F4E204670BAA1AC8C /* CatalogModel.swift */; };
+		CB54075925AA009F11E5A955 /* FullScreenPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0E8B43596DD48775A7AA99 /* FullScreenPlayer.swift */; };
 		D06FB26D3C0344E4FD0FF71A /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843AF486688D3BBEC398EB87 /* LicenseStore.swift */; };
 		F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
 		F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
@@ -62,6 +63,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E0E8B43596DD48775A7AA99 /* FullScreenPlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FullScreenPlayer.swift; sourceTree = "<group>"; };
 		1A000001000000000000000B /* AppexSaverMinimalApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppexSaverMinimalApp.swift; sourceTree = "<group>"; };
 		1A000002000000000000000B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1A000003000000000000000B /* AppexSaverMinimalExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppexSaverMinimalExtension.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 				5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */,
 				4AF4827F4E204670BAA1AC8C /* CatalogModel.swift */,
 				1D757FDC426E58CBD6258CD3 /* CatalogView.swift */,
+				0E0E8B43596DD48775A7AA99 /* FullScreenPlayer.swift */,
 			);
 			name = Commerce;
 			path = Commerce;
@@ -355,6 +358,7 @@
 				A86642010A97C9D6E31E85EF /* LoopDownloader.swift in Sources */,
 				AA249D5B8005D39FAAAA7F18 /* CatalogModel.swift in Sources */,
 				5EC031D25CB2A74F1F915E5F /* CatalogView.swift in Sources */,
+				CB54075925AA009F11E5A955 /* FullScreenPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

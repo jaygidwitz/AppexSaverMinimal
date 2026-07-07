@@ -45,6 +45,7 @@ struct CatalogView: View {
     }
 
     @ViewBuilder private func thumbnail(_ loop: CatalogLoop) -> some View {
+        let downloaded = downloader.isDownloaded(loop.id)
         AsyncImage(url: loop.poster.flatMap { URL(string: $0) }) { phase in
             if let image = phase.image {
                 image.resizable().aspectRatio(contentMode: .fill)
@@ -58,10 +59,21 @@ struct CatalogView: View {
         .overlay(alignment: .topTrailing) { badge(loop).padding(6) }
         .overlay {
             if !loop.entitled && !loop.isSample {
-                Image(systemName: "lock.fill")
-                    .font(.title3).foregroundStyle(.white).shadow(radius: 4)
+                Image(systemName: "lock.fill").font(.title3).foregroundStyle(.white).shadow(radius: 4)
+            } else if downloaded {
+                // Play affordance for loops already in the library.
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 34)).foregroundStyle(.white.opacity(0.92))
+                    .shadow(radius: 6)
             }
         }
+        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onTapGesture {
+            if downloaded, let url = downloader.localURL(for: loop.id) {
+                FullScreenPlayer.play(url: url, title: loop.title)
+            }
+        }
+        .help(downloaded ? "Click to play full screen" : "")
     }
 
     @ViewBuilder private func badge(_ loop: CatalogLoop) -> some View {
@@ -75,10 +87,13 @@ struct CatalogView: View {
     }
 
     private func tag(_ text: String, color: Color) -> some View {
-        Text(text).font(.system(size: 10, weight: .semibold))
-            .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(Capsule().fill(color.opacity(0.25)))
+        Text(text.uppercased())
+            .font(.system(size: 9, weight: .bold)).tracking(0.6)
             .foregroundStyle(color)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.45), lineWidth: 1))
+            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
     }
 
     @ViewBuilder private func actionRow(_ loop: CatalogLoop) -> some View {

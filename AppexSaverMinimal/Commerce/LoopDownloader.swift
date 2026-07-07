@@ -38,6 +38,12 @@ final class LoopDownloader: ObservableObject {
         FileManager.default.fileExists(atPath: destination(for: loopId).path)
     }
 
+    /// File URL of a downloaded loop in the shared cache, or nil if not present.
+    func localURL(for loopId: String) -> URL? {
+        let url = destination(for: loopId)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
     func download(_ loop: CatalogLoop) async {
         let key = keychain.load()
         if key == nil && !loop.isSample {                        // paid loops need a license; samples don't
