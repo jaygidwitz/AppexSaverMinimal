@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		19AD6622F4D263AFBBA27321 /* LicenseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B885BA01AB09A9B515644AF /* LicenseView.swift */; };
 		1A000001000000000000000A /* AppexSaverMinimalApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000001000000000000000B /* AppexSaverMinimalApp.swift */; };
 		1A000002000000000000000A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000002000000000000000B /* ContentView.swift */; };
 		1A000003000000000000000A /* AppexSaverMinimalExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000003000000000000000B /* AppexSaverMinimalExtension.swift */; };
@@ -16,17 +17,21 @@
 		1A000007000000000000000A /* AppexSaverMinimalExtension.appex in Embed PlugIns */ = {isa = PBXBuildFile; fileRef = 1A000007000000000000000B /* AppexSaverMinimalExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1A000030000000000000000A /* AppexSaverMinimalConfigurationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000030000000000000000B /* AppexSaverMinimalConfigurationViewController.swift */; };
 		1A000031000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000031000000000000000B /* Assets.xcassets */; };
-		F00DCAFE0000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000011 /* Assets.xcassets */; };
 		1A000032000000000000000A /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000032000000000000000B /* PluginManager.swift */; };
 		1A000060000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
 		1A000061000000000000000A /* RainbowAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000060000000000000000B /* RainbowAnimator.swift */; };
-		F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
-		F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
 		1A000062000000000000000A /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000062000000000000000B /* PreviewView.swift */; };
 		1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000063000000000000000B /* PreviewViewRepresentable.swift */; };
 		1A000066000000000000000A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000064000000000000000B /* Logger.swift */; };
 		1A000067000000000000000A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000064000000000000000B /* Logger.swift */; };
 		1A000070000000000000000A /* PaperSaverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A000070000000000000000B /* PaperSaverKit */; };
+		702CE2326462B98F0B846FBB /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117054DF587FF85776463AC /* Keychain.swift */; };
+		79994C6B6D83A8460E66F813 /* CommerceAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */; };
+		7EC2E35F3A27D44AEFB3D283 /* DeviceID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817F8D7F70648C542BBB903B /* DeviceID.swift */; };
+		D06FB26D3C0344E4FD0FF71A /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843AF486688D3BBEC398EB87 /* LicenseStore.swift */; };
+		F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
+		F00DCAFE0000000000000002 /* VideoPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000003 /* VideoPlayerController.swift */; };
+		F00DCAFE0000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F00DCAFE0000000000000011 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,14 +75,19 @@
 		1A000011000000000000000B /* AppexSaverMinimalExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppexSaverMinimalExtension.entitlements; sourceTree = "<group>"; };
 		1A000030000000000000000B /* AppexSaverMinimalConfigurationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppexSaverMinimalConfigurationViewController.swift; sourceTree = "<group>"; };
 		1A000031000000000000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		F00DCAFE0000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1A000032000000000000000B /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		1A000050000000000000000B /* BuildNumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BuildNumber.xcconfig; sourceTree = "<group>"; };
 		1A000060000000000000000B /* RainbowAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainbowAnimator.swift; sourceTree = "<group>"; };
-		F00DCAFE0000000000000003 /* VideoPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerController.swift; sourceTree = "<group>"; };
 		1A000062000000000000000B /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 		1A000063000000000000000B /* PreviewViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewRepresentable.swift; sourceTree = "<group>"; };
 		1A000064000000000000000B /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		5117054DF587FF85776463AC /* Keychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommerceAPI.swift; sourceTree = "<group>"; };
+		817F8D7F70648C542BBB903B /* DeviceID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceID.swift; sourceTree = "<group>"; };
+		843AF486688D3BBEC398EB87 /* LicenseStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LicenseStore.swift; sourceTree = "<group>"; };
+		8B885BA01AB09A9B515644AF /* LicenseView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LicenseView.swift; sourceTree = "<group>"; };
+		F00DCAFE0000000000000003 /* VideoPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerController.swift; sourceTree = "<group>"; };
+		F00DCAFE0000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +135,7 @@
 				1A00000A000000000000000B /* Info.plist */,
 				1A00000B000000000000000B /* AppexSaverMinimal.entitlements */,
 				F00DCAFE0000000000000011 /* Assets.xcassets */,
+				9DB52FCD1665D919FFBE983A /* Commerce */,
 			);
 			path = AppexSaverMinimal;
 			sourceTree = "<group>";
@@ -176,6 +187,19 @@
 				1A000064000000000000000B /* Logger.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		9DB52FCD1665D919FFBE983A /* Commerce */ = {
+			isa = PBXGroup;
+			children = (
+				817F8D7F70648C542BBB903B /* DeviceID.swift */,
+				5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */,
+				5117054DF587FF85776463AC /* Keychain.swift */,
+				843AF486688D3BBEC398EB87 /* LicenseStore.swift */,
+				8B885BA01AB09A9B515644AF /* LicenseView.swift */,
+			);
+			name = Commerce;
+			path = Commerce;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -314,6 +338,11 @@
 				F00DCAFE0000000000000001 /* VideoPlayerController.swift in Sources */,
 				1A000062000000000000000A /* PreviewView.swift in Sources */,
 				1A000063000000000000000A /* PreviewViewRepresentable.swift in Sources */,
+				7EC2E35F3A27D44AEFB3D283 /* DeviceID.swift in Sources */,
+				79994C6B6D83A8460E66F813 /* CommerceAPI.swift in Sources */,
+				702CE2326462B98F0B846FBB /* Keychain.swift in Sources */,
+				D06FB26D3C0344E4FD0FF71A /* LicenseStore.swift in Sources */,
+				19AD6622F4D263AFBBA27321 /* LicenseView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

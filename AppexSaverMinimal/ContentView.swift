@@ -185,6 +185,7 @@ final class LibraryViewModel: ObservableObject {
 struct ContentView: View {
     @StateObject private var pluginManager = PluginManager()
     @StateObject private var library = LibraryViewModel()
+    @StateObject private var license = LicenseStore()
     @State private var previewToken = 0
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
@@ -201,6 +202,7 @@ struct ContentView: View {
                     hero
                     VStack(alignment: .leading, spacing: 28) {
                         librarySection
+                        LicenseView(store: license)
                         screensaverSection
                         storeSection
                     }
@@ -214,6 +216,7 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .navigationTitle("Surrealism")
         .onAppear { library.reload() }
+        .task { await license.revalidateIfNeeded() }
     }
 
     private func bumpPreview() { previewToken += 1 }
