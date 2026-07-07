@@ -8,9 +8,25 @@
 
 import SwiftUI
 
+/// A brief horizontal shake — animate `travel` to a new integer to trigger one pass.
+private struct ShakeEffect: GeometryEffect {
+    var travel: CGFloat
+    var amplitude: CGFloat = 5
+    var shakes: CGFloat = 3
+    var animatableData: CGFloat {
+        get { travel }
+        set { travel = newValue }
+    }
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let dx = amplitude * sin(travel * .pi * shakes)
+        return ProjectionTransform(CGAffineTransform(translationX: dx, y: 0))
+    }
+}
+
 struct LicenseView: View {
     @ObservedObject var store: LicenseStore
     @State private var keyInput = ""
+    @State private var shakeTrigger: CGFloat = 0
     @FocusState private var keyFocused: Bool
 
     private let storeURL = URL(string: "https://surrealism.app")!
@@ -62,6 +78,7 @@ struct LicenseView: View {
     // MARK: - Entry / upsell
 
     @ViewBuilder private func entry(headline: String, sub: String) -> some View {
+        let hasError = store.entryError != nil
         upsellHeader(title: headline, subtitle: sub)
         HStack(spacing: 10) {
             TextField("SURR-XXXX-XXXX-XXXX", text: $keyInput)
@@ -72,14 +89,29 @@ struct LicenseView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.35))
                         .overlay(RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(keyFocused ? Color.accentColor : .white.opacity(0.12), lineWidth: 1))
+                            .strokeBorder(borderColor(hasError: hasError), lineWidth: 1))
                 )
                 .frame(maxWidth: 300)
                 .focused($keyFocused)
                 .onSubmit(submit)
+                // Clear the red state the moment they start correcting the key.
+                .onChange(of: keyInput) { if store.entryError != nil { store.clearEntryError() } }
             Button("Unlock", action: submit)
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(keyInput.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+        .modifier(ShakeEffect(travel: shakeTrigger))
+        .onChange(of: store.entryError) {
+            if store.entryError != nil {
+                withAnimation(.linear(duration: 0.4)) { shakeTrigger += 1 }
+            }
+        }
+        if let err = store.entryError {
+            Text(Self.errorMessage(err))
+                .font(.system(size: 12))
+                .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.42))
+                .frame(maxWidth: 300, alignment: .leading)
+                .transition(.opacity)
         }
         Link(destination: storeURL) {
             HStack(spacing: 5) {
@@ -128,6 +160,20 @@ struct LicenseView: View {
     private func submit() {
         let key = keyInput
         Task { await store.enter(key: key) }
+    }
+
+    private func borderColor(hasError: Bool) -> Color {
+        if hasError { return Color(red: 1.0, green: 0.42, blue: 0.42) }
+        return keyFocused ? Color.accentColor : .white.opacity(0.12)
+    }
+
+    static func errorMessage(_ error: LicenseStore.EntryError) -> String {
+        switch error {
+        case .invalidKey:
+            return "That key isn't valid — check for typos. It looks like SURR-XXXX-XXXX-XXXX."
+        case .network:
+            return "Couldn't reach Surrealism to verify. Check your connection and try again."
+        }
     }
 
     static func tierLabel(_ tier: String) -> String {

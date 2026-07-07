@@ -21,7 +21,27 @@ final class LicenseStore: ObservableObject {
         case revoked              // refunded/disputed/revoked
     }
 
+    /// Transient feedback for the entry panel — why the last unlock attempt failed.
+    /// Distinct from `state` so a wrong key vs. an unreachable server read differently,
+    /// and a legit offline user is never told their real key is fake.
+    enum EntryError: Equatable {
+        case invalidKey   // server said valid:false, or the key failed the local format check
+        case network      // couldn't reach the backend to verify
+    }
+
     @Published private(set) var state: State = .locked
+    @Published private(set) var entryError: EntryError?
+
+    /// A Surrealism key: `SURR-XXXX-XXXX-XXXX`, groups from the key alphabet
+    /// (Crockford-ish, no I/L/O/U). Broad enough to never reject a real key;
+    /// tight enough to catch obvious typos before a network round-trip.
+    private static let keyFormat = try! NSRegularExpression(
+        pattern: "^SURR-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
+
+    static func looksLikeKey(_ key: String) -> Bool {
+        let range = NSRange(key.startIndex..., in: key)
+        return keyFormat.firstMatch(in: key, range: range) != nil
+    }
 
     private let validator: LicenseValidating
     private let keychain: LicenseKeyStoring
@@ -45,6 +65,9 @@ final class LicenseStore: ObservableObject {
         self.graceInterval = graceDays * 86_400
     }
 
+    /// Dismiss the entry error (e.g. the user started correcting the key).
+    func clearEntryError() { entryError = nil }
+
     var isUnlocked: Bool { if case .unlocked = state { return true } else { return false } }
     var hasStoredKey: Bool { keychain.load() != nil }
 
@@ -52,10 +75,13 @@ final class LicenseStore: ObservableObject {
     func enter(key: String) async {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         guard !trimmed.isEmpty else { return }
+        entryError = nil
+        // Catch obvious typos instantly — no server round-trip for garbage input.
+        guard Self.looksLikeKey(trimmed) else { entryError = .invalidKey; return }
         state = .checking
         do {
             let resp = try await validator.validate(key: trimmed, deviceId: deviceId)
-            guard resp.valid else { state = .locked; return }
+            guard resp.valid else { entryError = .invalidKey; state = .locked; return }
             try? keychain.save(trimmed)             // valid key — keep it even at the device limit
             if resp.activation == "device_limit" {
                 state = .deviceLimit
@@ -63,7 +89,9 @@ final class LicenseStore: ObservableObject {
                 apply(resp)
             }
         } catch {
-            // Can't confirm a brand-new key offline — stay locked (nothing cached to trust).
+            // Can't confirm the key (offline, rate-limited, or 5xx). Don't call it
+            // fake — say the server was unreachable so a legit user can retry.
+            entryError = .network
             state = .locked
         }
     }
@@ -94,6 +122,7 @@ final class LicenseStore: ObservableObject {
     func signOut() {
         try? keychain.clear()
         clearCache()
+        entryError = nil
         state = .locked
     }
 
@@ -105,6 +134,7 @@ final class LicenseStore: ObservableObject {
         defaults.set(tier, forKey: kTier)
         defaults.set(packs, forKey: kPacks)
         defaults.set(Date().timeIntervalSince1970, forKey: kLastValidated)
+        entryError = nil
         state = .unlocked(tier: tier, packs: packs)
     }
 

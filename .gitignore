@@ -4,3 +4,6 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 *.xcbkptlist
+
+# Xcode command-line build output
+build/
