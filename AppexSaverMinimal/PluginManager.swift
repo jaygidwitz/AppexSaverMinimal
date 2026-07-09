@@ -25,7 +25,7 @@ class PluginManager: ObservableObject {
     @Published var isCheckingScreensaver: Bool = false
     @Published var screensaverError: String?
 
-    private let bundleIdentifier = "net.aerialscreensaver.AppexSaverMinimal.Extension"
+    private let bundleIdentifier = "app.surrealism.screensaver.Extension"
     private let paperSaver = PaperSaver()
     private let screensaverDisplayName = "AppexSaverMinimalExtension"
 
@@ -77,7 +77,7 @@ class PluginManager: ObservableObject {
 
     /// Query pluginkit for our extension's registration status.
     /// Line format we look for:
-    ///   `+    net.aerialscreensaver.AppexSaverMinimal.Extension(1.0) <path>`
+    ///   `+    app.surrealism.screensaver.Extension(1.0) <path>`
     private func queryPluginKit() async throws -> (Bool, String?, String?) {
         let output = try runProcess("/usr/bin/pluginkit", arguments: ["-m", "-v", "-p", "com.apple.screensaver"])
 
