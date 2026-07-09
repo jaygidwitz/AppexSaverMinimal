@@ -365,6 +365,17 @@ struct ContentView: View {
 
     // MARK: Screensaver
 
+    @ViewBuilder private func instructionStep(_ n: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 9) {
+            Text("\(n)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Color(red: 0.77, green: 0.71, blue: 0.99))
+                .frame(width: 15, alignment: .center)
+            Text(text).foregroundStyle(.white.opacity(0.62))
+            Spacer(minLength: 0)
+        }
+    }
+
     private var screensaverSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Screensaver").font(.title2).fontWeight(.semibold)
@@ -378,6 +389,16 @@ struct ContentView: View {
                              ? "Ready — make Surrealism your screensaver."
                              : "Set Surrealism as your Mac screensaver.")
                             .foregroundStyle(.white.opacity(0.65))
+                    }
+
+                    if !pluginManager.isActiveScreensaver {
+                        VStack(alignment: .leading, spacing: 7) {
+                            instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” below — it installs Surrealism and turns it on in one step.")
+                            instructionStep(2, "If macOS asks you to confirm, choose Surrealism in System Settings ▸ Screen Saver.")
+                            instructionStep(3, "Preview it or switch back anytime with “Screen Saver Settings.”")
+                        }
+                        .font(.callout)
+                        .padding(.top, 2)
                     }
 
                     if let error = pluginManager.lastError ?? pluginManager.screensaverError {

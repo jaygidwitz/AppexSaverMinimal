@@ -6,6 +6,9 @@
 # direct distribution off surrealism.app. Not for the Mac App Store.
 #
 # Prerequisites (one-time):
+#   • create-dmg (branded DMG layout):  brew install create-dmg
+#     (the background PNG is scripts/assets/dmg-background.png; regenerate with
+#      python3 scripts/make-dmg-background.py)
 #   • A "Developer ID Application" cert in your login keychain
 #       security find-identity -v -p codesigning   # should list Jay Gidwitz (8FYWMC4BJ3)
 #   • A notarytool credential profile named "$NOTARY_PROFILE":
@@ -76,15 +79,26 @@ else
   log "SKIP_NOTARIZE=1 → skipping notarization/stapling (local smoke test only)."
 fi
 
-# ── 4. Build, sign, notarize & staple the DMG (drag-to-/Applications) ─────────
-# The .app inside is already notarized+stapled (step 3); the DMG needs its OWN
-# sign→notarize→staple so it passes Gatekeeper offline as the downloaded artifact.
-log "Building ${PRODUCT_NAME}.dmg…"
-DMGROOT="$BUILD/dmgroot"; mkdir -p "$DMGROOT"
-cp -R "$APP" "$DMGROOT/"
-ln -s /Applications "$DMGROOT/Applications"
+# ── 4. Build a laid-out DMG, then sign, notarize & staple it ─────────────────
+# create-dmg sets the compact window, icon positions, branded background, and the
+# Applications drop-link. The .app inside is already notarized+stapled (step 3);
+# the DMG then gets its OWN sign→notarize→staple so it passes Gatekeeper offline.
+# Requires: brew install create-dmg
+log "Building ${PRODUCT_NAME}.dmg (create-dmg, branded layout)…"
 rm -f "$DMG"
-hdiutil create -volname "$PRODUCT_NAME" -srcfolder "$DMGROOT" -ov -format UDZO "$DMG" >/dev/null
+create-dmg \
+  --volname "$PRODUCT_NAME" \
+  --volicon "$APP/Contents/Resources/AppIcon.icns" \
+  --background "$ROOT/scripts/assets/dmg-background.tiff" \
+  --window-pos 200 120 \
+  --window-size 660 420 \
+  --icon-size 120 \
+  --icon "${PRODUCT_NAME}.app" 175 205 \
+  --app-drop-link 485 205 \
+  --hide-extension "${PRODUCT_NAME}.app" \
+  --no-internet-enable \
+  "$DMG" "$STAGE" || true   # create-dmg can exit non-zero on a benign AppleScript hiccup
+[ -f "$DMG" ] || { echo "create-dmg failed to produce $DMG"; exit 1; }
 
 if [ "${SKIP_NOTARIZE:-0}" != "1" ]; then
   log "Signing, notarizing & stapling the DMG…"
