@@ -76,7 +76,9 @@ else
   log "SKIP_NOTARIZE=1 → skipping notarization/stapling (local smoke test only)."
 fi
 
-# ── 4. Build the DMG (drag-to-/Applications) ─────────────────────────────────
+# ── 4. Build, sign, notarize & staple the DMG (drag-to-/Applications) ─────────
+# The .app inside is already notarized+stapled (step 3); the DMG needs its OWN
+# sign→notarize→staple so it passes Gatekeeper offline as the downloaded artifact.
 log "Building ${PRODUCT_NAME}.dmg…"
 DMGROOT="$BUILD/dmgroot"; mkdir -p "$DMGROOT"
 cp -R "$APP" "$DMGROOT/"
@@ -84,9 +86,12 @@ ln -s /Applications "$DMGROOT/Applications"
 rm -f "$DMG"
 hdiutil create -volname "$PRODUCT_NAME" -srcfolder "$DMGROOT" -ov -format UDZO "$DMG" >/dev/null
 
-# Staple the DMG too (so the ticket travels with the download).
 if [ "${SKIP_NOTARIZE:-0}" != "1" ]; then
-  xcrun stapler staple "$DMG" || true
+  log "Signing, notarizing & stapling the DMG…"
+  codesign --force --sign "$SIGN_ID" --timestamp "$DMG"
+  xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun stapler staple "$DMG"
+  xcrun stapler validate "$DMG"
 fi
 
 log "Done → $DMG"
