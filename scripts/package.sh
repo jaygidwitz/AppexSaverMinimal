@@ -29,8 +29,7 @@ CONFIG="Release"
 TEAM_ID="8FYWMC4BJ3"
 SIGN_ID="Developer ID Application: Jay Gidwitz (${TEAM_ID})"
 NOTARY_PROFILE="${NOTARY_PROFILE:-surrealism-notary}"
-PRODUCT_NAME="Surrealism"                 # display name of the shipped .app / DMG volume
-BUNDLE_EXECUTABLE="AppexSaverMinimal"     # the built binary name inside Contents/MacOS
+PRODUCT_NAME="Surrealism"                 # product/.app/executable name (PRODUCT_NAME in the project)
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build/package"
@@ -46,7 +45,7 @@ log "Building ${SCHEME} (${CONFIG})…"
 rm -rf "$BUILD"; mkdir -p "$STAGE"
 xcodebuild -scheme "$SCHEME" -configuration "$CONFIG" -destination 'platform=macOS' \
   -derivedDataPath "$BUILD/dd" CODE_SIGNING_ALLOWED=NO clean build >/dev/null
-APP_SRC="$(find "$BUILD/dd/Build/Products/${CONFIG}" -maxdepth 1 -name "${SCHEME}.app" | head -1)"
+APP_SRC="$(find "$BUILD/dd/Build/Products/${CONFIG}" -maxdepth 1 -name "${PRODUCT_NAME}.app" | head -1)"
 [ -n "$APP_SRC" ] || { echo "build produced no .app"; exit 1; }
 
 # Stage under the shipped product name (Finder shows Surrealism.app; the inner

@@ -24,24 +24,42 @@ struct SurrealismMark: View {
     var size: CGFloat = 40
     var body: some View {
         ZStack {
+            // Glossy pearlescent sphere — matches the app icon's orb: a bright
+            // top-left highlight fading to a deep violet edge for 3D depth.
             Circle().fill(
-                AngularGradient(gradient: Gradient(colors: [
-                    Color(red: 0.55, green: 0.25, blue: 0.95),
-                    Color(red: 0.25, green: 0.35, blue: 0.95),
-                    Color(red: 0.35, green: 0.70, blue: 0.95),
-                    Color(red: 0.95, green: 0.35, blue: 0.75),
-                    Color(red: 0.55, green: 0.25, blue: 0.95),
-                ]), center: .center))
+                RadialGradient(
+                    colors: [
+                        Color(red: 0.99, green: 0.97, blue: 1.00),  // near-white core
+                        Color(red: 0.87, green: 0.83, blue: 0.98),  // soft lavender
+                        Color(red: 0.55, green: 0.45, blue: 0.85),  // violet
+                        Color(red: 0.22, green: 0.17, blue: 0.40),  // deep edge
+                    ],
+                    center: UnitPoint(x: 0.37, y: 0.31),
+                    startRadius: 0, endRadius: size * 0.60))
+            // Iridescent wash — pink toward the top, cyan toward the bottom.
+            Circle().fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.96, green: 0.55, blue: 0.86).opacity(0.38), // pink
+                        .clear,
+                        Color(red: 0.42, green: 0.86, blue: 0.96).opacity(0.42), // cyan
+                    ],
+                    startPoint: .topTrailing, endPoint: .bottomLeading))
+                .blendMode(.screen)
+            // Specular highlight (the glossy dot).
             Ellipse().fill(
-                RadialGradient(colors: [.white.opacity(0.8), .clear],
-                               center: .center, startRadius: 0, endRadius: size * 0.30))
-                .frame(width: size * 0.52, height: size * 0.40)
-                .offset(x: -size * 0.15, y: -size * 0.18)
-                .blur(radius: size * 0.02)
-            Circle().strokeBorder(.white.opacity(0.25), lineWidth: max(1, size * 0.03))
+                RadialGradient(colors: [.white.opacity(0.95), .clear],
+                               center: .center, startRadius: 0, endRadius: size * 0.16))
+                .frame(width: size * 0.34, height: size * 0.26)
+                .offset(x: -size * 0.17, y: -size * 0.20)
+            // Rim: bright top edge, darker bottom edge, for a rounded read.
+            Circle().strokeBorder(
+                LinearGradient(colors: [.white.opacity(0.35), .black.opacity(0.28)],
+                               startPoint: .top, endPoint: .bottom),
+                lineWidth: max(1, size * 0.02))
         }
         .frame(width: size, height: size)
-        .shadow(color: Color(red: 0.5, green: 0.2, blue: 0.9).opacity(0.5), radius: size * 0.2, y: size * 0.05)
+        .shadow(color: Color(red: 0.40, green: 0.20, blue: 0.70).opacity(0.45), radius: size * 0.18, y: size * 0.06)
     }
 }
 
@@ -203,11 +221,11 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     hero
                     VStack(alignment: .leading, spacing: 28) {
+                        screensaverSection
                         librarySection
                         LicenseView(store: license)
                         CatalogView(model: catalog, downloader: downloader,
                                     onLibraryChanged: { library.reload() })
-                        screensaverSection
                         storeSection
                     }
                     .padding(30)
@@ -394,8 +412,8 @@ struct ContentView: View {
                     if !pluginManager.isActiveScreensaver {
                         VStack(alignment: .leading, spacing: 7) {
                             instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” below — it installs Surrealism and turns it on in one step.")
-                            instructionStep(2, "If macOS asks you to confirm, choose Surrealism in System Settings ▸ Screen Saver.")
-                            instructionStep(3, "Preview it or switch back anytime with “Screen Saver Settings.”")
+                            instructionStep(2, "If macOS asks you to confirm, approve Surrealism when System Settings opens.")
+                            instructionStep(3, "Preview it or switch back anytime — the button below opens the right settings pane.")
                         }
                         .font(.callout)
                         .padding(.top, 2)
@@ -455,7 +473,13 @@ struct ContentView: View {
     }
 
     private func openScreenSaverSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.ScreenSaver-Settings.extension") {
+        // macOS 26 (Tahoe) folded the Screen Saver pane into Wallpaper; earlier
+        // versions have a dedicated Screen Saver pane. Using the wrong id silently
+        // dumps the user on the General pane, so pick by OS version.
+        let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        let pane = major >= 26 ? "com.apple.Wallpaper-Settings.extension"
+                               : "com.apple.ScreenSaver-Settings.extension"
+        if let url = URL(string: "x-apple.systempreferences:\(pane)") {
             NSWorkspace.shared.open(url)
         }
     }

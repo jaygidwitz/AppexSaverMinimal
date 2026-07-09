@@ -95,7 +95,7 @@ struct CatalogView: View {
 
     @ViewBuilder private func badge(_ loop: CatalogLoop) -> some View {
         if loop.isSample {
-            tag("Sample", color: .green)
+            tag("Starter", color: .green)
         } else if loop.entitled {
             tag("Owned", color: .blue)
         } else {
