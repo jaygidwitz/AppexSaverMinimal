@@ -2,16 +2,12 @@
 //  AppexSaverMinimalConfigurationViewController.swift
 //  AppexSaverMinimalExtension
 //
-//  Copyright © 2026 Guillaume Louel. Licensed under the MIT License.
+//  Copyright © 2026. Licensed under the MIT License.
 //
-//  Configuration sheet displayed when the user clicks "Options" next to the
-//  screensaver in System Settings. Specified as
-//  ScreenSaverConfigurationSheetViewControllerClass in Info.plist as
-//  `$(PRODUCT_MODULE_NAME).AppexSaverMinimalConfigurationViewController`.
-//
-//  This sample has no real configuration; it shows the bare minimum needed
-//  for the sheet to dismiss cleanly. SwiftUI works here too — wrap your
-//  SwiftUI view in NSHostingController and use it as self.view.
+//  The sheet shown when the user clicks "Options…" next to Surrealism in the
+//  Screen Saver settings. The screensaver itself has nothing to tune — the
+//  library, license, and setup all live in the Surrealism app — so this points
+//  the user there via the `surrealism://` URL scheme (registered by the host).
 //
 
 import AppKit
@@ -22,43 +18,64 @@ private let logger = AppexLog.logger("Configuration")
 class AppexSaverMinimalConfigurationViewController: NSViewController {
 
     override init(nibName nibNameOrNil: NSNib.Name?, bundle nibBundleOrNil: Bundle?) {
-        logger.info("init(nibName:bundle:)")
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
 
     required init?(coder: NSCoder) {
-        logger.info("init(coder:)")
         super.init(coder: coder)
     }
 
     override func loadView() {
-        logger.info("loadView()")
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 190))
 
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 120))
+        let title = NSTextField(labelWithString: "Surrealism")
+        title.font = .systemFont(ofSize: 20, weight: .semibold)
+        title.alignment = .center
 
-        let label = NSTextField(labelWithString: "AppexSaverMinimal")
-        label.font = NSFont.systemFont(ofSize: 18, weight: .medium)
-        label.alignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(label)
+        let body = NSTextField(wrappingLabelWithString:
+            "Your loops, library, and license live in the Surrealism app. Open it to add loops, manage your library, or unlock the full collection.")
+        body.font = .systemFont(ofSize: 12)
+        body.textColor = .secondaryLabelColor
+        body.alignment = .center
 
-        let button = NSButton(title: "OK", target: self, action: #selector(dismissSheet(_:)))
-        button.bezelStyle = .rounded
-        button.keyEquivalent = "\r"
-        button.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(button)
+        let open = NSButton(title: "Open Surrealism", target: self, action: #selector(openApp(_:)))
+        open.bezelStyle = .rounded
+        open.keyEquivalent = "\r"
+
+        let done = NSButton(title: "Done", target: self, action: #selector(dismissSheet(_:)))
+        done.bezelStyle = .rounded
+
+        [title, body, open, done].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview($0)
+        }
 
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 30),
+            title.topAnchor.constraint(equalTo: container.topAnchor, constant: 22),
+            title.centerXAnchor.constraint(equalTo: container.centerXAnchor),
 
-            button.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            button.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
-            button.widthAnchor.constraint(greaterThanOrEqualToConstant: 80)
+            body.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 10),
+            body.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 26),
+            body.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -26),
+
+            open.topAnchor.constraint(equalTo: body.bottomAnchor, constant: 18),
+            open.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            open.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+
+            done.topAnchor.constraint(equalTo: open.bottomAnchor, constant: 8),
+            done.centerXAnchor.constraint(equalTo: container.centerXAnchor),
         ])
 
         self.view = container
-        self.preferredContentSize = NSSize(width: 300, height: 120)
+        self.preferredContentSize = NSSize(width: 400, height: 190)
+    }
+
+    @objc private func openApp(_ sender: Any?) {
+        if let url = URL(string: "surrealism://open") {
+            logger.info("Opening host app via surrealism:// scheme")
+            NSWorkspace.shared.open(url)
+        }
+        dismissSheet(sender)
     }
 
     @objc private func dismissSheet(_ sender: Any?) {

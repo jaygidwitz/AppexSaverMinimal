@@ -411,9 +411,9 @@ struct ContentView: View {
 
                     if !pluginManager.isActiveScreensaver {
                         VStack(alignment: .leading, spacing: 7) {
-                            instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” below — it installs Surrealism and turns it on in one step.")
-                            instructionStep(2, "If macOS asks you to confirm, approve Surrealism when System Settings opens.")
-                            instructionStep(3, "Preview it or switch back anytime — the button below opens the right settings pane.")
+                            instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” — it installs Surrealism and opens Screen Saver settings.")
+                            instructionStep(2, "In the list that opens, choose Surrealism.")
+                            instructionStep(3, "It runs when your Mac is idle. Reopen Screen Saver Settings anytime to preview or switch.")
                         }
                         .font(.callout)
                         .padding(.top, 2)
@@ -466,10 +466,18 @@ struct ContentView: View {
     private func setUpScreensaver() {
         do {
             if !pluginManager.isInstalled { try pluginManager.install() }
-            Task { await pluginManager.enableAsScreensaver() }
         } catch {
             logger.error("Setup failed: \(error.localizedDescription, privacy: .public)")
+            return
         }
+        // macOS 26 moved screen savers into the Wallpaper/idle system, where
+        // flipping the active saver programmatically no longer works reliably.
+        // Older macOS can still set it directly; on 26 we open the picker so the
+        // user can select Surrealism (the one path that works everywhere).
+        if ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26 {
+            Task { await pluginManager.enableAsScreensaver() }
+        }
+        openScreenSaverSettings()
     }
 
     private func openScreenSaverSettings() {
