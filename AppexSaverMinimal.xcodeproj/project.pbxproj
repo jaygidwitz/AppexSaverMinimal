@@ -737,10 +737,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.surrealism.screensaver.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AppexSaverMinimal.app/Contents/MacOS/AppexSaverMinimal";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Surrealism.app/Contents/MacOS/Surrealism";
 			};
 			name = Release;
 		};
@@ -753,10 +754,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.surrealism.screensaver.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AppexSaverMinimal.app/Contents/MacOS/AppexSaverMinimal";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Surrealism.app/Contents/MacOS/Surrealism";
 			};
 			name = Debug;
 		};

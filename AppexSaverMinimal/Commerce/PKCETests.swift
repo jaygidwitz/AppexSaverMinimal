@@ -4,7 +4,7 @@
 //
 
 import XCTest
-@testable import AppexSaverMinimal
+@testable import Surrealism
 
 final class PKCETests: XCTestCase {
 

@@ -2,21 +2,16 @@
 //  LicenseStoreTests.swift
 //  Surrealism · Commerce
 //
-//  Unit tests for the unlock flow's failure feedback: a fake key must surface
-//  `.invalidKey`, an unreachable server `.network` — never conflated with a
-//  revoked/valid state.
+//  Unit tests for the unlock flow's failure feedback and the email sign-in flow.
+//  A fake key must surface `.invalidKey`, an unreachable server `.network` — never
+//  conflated with a revoked/valid state; sign-in drives the pending/exchange states.
 //
-//  NOTE: not yet wired into a test target. To run these:
-//    1. In Xcode: File ▸ New ▸ Target… ▸ Unit Testing Bundle
-//       (name e.g. "AppexSaverMinimalTests", host app = AppexSaverMinimal).
-//    2. Add this file to that target (File Inspector ▸ Target Membership).
-//    3. ⌘U.
-//  Left in the Commerce group so it's easy to find; move into the test target's
-//  group once created.
+//  Runs in the AppexSaverMinimalTests target:
+//    xcodebuild test -scheme AppexSaverMinimal -destination 'platform=macOS'
 //
 
 import XCTest
-@testable import AppexSaverMinimal
+@testable import Surrealism
 
 private final class FakeValidator: LicenseValidating {
     var result: Result<ValidateResponse, Error>

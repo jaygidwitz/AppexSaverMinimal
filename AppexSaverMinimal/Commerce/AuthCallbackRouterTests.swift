@@ -4,7 +4,7 @@
 //
 
 import XCTest
-@testable import AppexSaverMinimal
+@testable import Surrealism
 
 final class AuthCallbackRouterTests: XCTestCase {
     private func url(_ s: String) -> URL { URL(string: s)! }
