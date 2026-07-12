@@ -203,7 +203,9 @@ final class LibraryViewModel: ObservableObject {
 struct ContentView: View {
     @StateObject private var pluginManager = PluginManager()
     @StateObject private var library = LibraryViewModel()
-    @StateObject private var license = LicenseStore()
+    // Shared, app-owned: the magic-link callback (handled in AppDelegate) must
+    // update the same store this window's sign-in UI is bound to.
+    @EnvironmentObject private var license: LicenseStore
     @StateObject private var catalog = CatalogModel()
     @StateObject private var downloader = LoopDownloader()
     @State private var previewToken = 0
@@ -239,8 +241,8 @@ struct ContentView: View {
         .navigationTitle("Surrealism")
         .onAppear { library.reload() }
         .task { await license.revalidateIfNeeded() }
-        // Magic-link return: surrealism://auth/callback?code=&state=
-        .onOpenURL { url in Task { await license.handleAuthCallback(url) } }
+        // Magic-link return (surrealism://auth/callback) is handled app-level in
+        // AppDelegate — not per-window here, which would spawn a second window.
     }
 
     private func bumpPreview() { previewToken += 1 }
