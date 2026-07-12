@@ -18,6 +18,7 @@ import AVFoundation
 enum FullScreenPlayer {
     private static var window: OverlayWindow?
     private static var controller: VideoPlayerController?
+    private static var propagator: PlaybackPropagator?
     private static var cursorTimer: Timer?
 
     /// The controller currently on screen, so live settings changes (U6) can drive it.
@@ -28,17 +29,23 @@ enum FullScreenPlayer {
         present(videos: [url], shuffle: false, crossFade: PlaybackSettings.defaultFade)
     }
 
-    /// Play a rotation of loops with cross-fades, optionally shuffled.
+    /// Play a rotation of loops with cross-fades, optionally shuffled. When
+    /// `liveSettings` is provided, changes to it apply to the running player (U6).
     static func playPlaylist(urls: [URL], title: String,
                              shuffle: Bool = true,
-                             crossFade: TimeInterval = PlaybackSettings.defaultFade) {
+                             crossFade: TimeInterval = PlaybackSettings.defaultFade,
+                             liveSettings: PlaybackSettings? = nil,
+                             library: (() -> [URL])? = nil) {
         guard !urls.isEmpty else { return }
-        present(videos: urls, shuffle: shuffle, crossFade: crossFade)
+        present(videos: urls, shuffle: shuffle, crossFade: crossFade,
+                liveSettings: liveSettings, library: library)
     }
 
     // MARK: - Presentation
 
-    private static func present(videos: [URL], shuffle: Bool, crossFade: TimeInterval) {
+    private static func present(videos: [URL], shuffle: Bool, crossFade: TimeInterval,
+                                liveSettings: PlaybackSettings? = nil,
+                                library: (() -> [URL])? = nil) {
         close(animated: false)
 
         let screen = NSScreen.main ?? NSScreen.screens.first
@@ -54,6 +61,12 @@ enum FullScreenPlayer {
         vpc.attach(to: container.layer!)
         vpc.updateBounds(container.bounds)
         controller = vpc
+
+        // Live-drive the running player from the shared settings (U6).
+        if let liveSettings {
+            propagator = PlaybackPropagator(settings: liveSettings, engine: vpc,
+                                            library: library ?? { videos })
+        }
 
         let win = OverlayWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         win.contentView = container
@@ -95,6 +108,7 @@ enum FullScreenPlayer {
         guard let win = window else { return }
         window = nil
         let teardown: () -> Void = {
+            propagator = nil
             controller?.stop()
             controller = nil
             win.orderOut(nil)

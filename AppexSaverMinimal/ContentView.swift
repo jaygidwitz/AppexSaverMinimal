@@ -298,7 +298,9 @@ struct ContentView: View {
                             library: library.videos.map(\.url))
                         FullScreenPlayer.playPlaylist(urls: active, title: "Surrealism",
                                                       shuffle: playback.shuffle,
-                                                      crossFade: playback.crossFadeSeconds)
+                                                      crossFade: playback.crossFadeSeconds,
+                                                      liveSettings: playback,
+                                                      library: { library.videos.map(\.url) })
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "play.fill")
