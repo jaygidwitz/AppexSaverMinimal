@@ -290,7 +290,12 @@ struct ContentView: View {
             .overlay(alignment: .bottomTrailing) {
                 if !library.videos.isEmpty {
                     Button {
-                        FullScreenPlayer.playPlaylist(urls: library.videos.map(\.url), title: "Surrealism")
+                        let active = RotationResolver.activeURLs(
+                            rotation: playback.rotation,
+                            library: library.videos.map(\.url))
+                        FullScreenPlayer.playPlaylist(urls: active, title: "Surrealism",
+                                                      shuffle: playback.shuffle,
+                                                      crossFade: playback.crossFadeSeconds)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "play.fill")

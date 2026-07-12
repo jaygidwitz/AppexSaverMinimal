@@ -2,68 +2,58 @@
 //  FullScreenPlayer.swift
 //  Surrealism · Commerce
 //
-//  Plays a loop — or the whole library as a playlist — full-screen. A borderless
-//  overlay fades in over the current Space (no full-screen Space-slide, no black
-//  flash). Cursor auto-hides after a moment of stillness. Esc / click exits.
+//  Plays a loop — or a rotation of loops — full-screen. A borderless overlay
+//  fades in over the current Space (no full-screen Space-slide, no black flash).
+//  Cursor auto-hides after a moment of stillness. Esc / click exits.
+//
+//  Backed by VideoPlayerController (the same two-layer cross-fade engine the
+//  screensaver uses) so the in-app player fades between clips and honors the
+//  shared playback settings — shuffle, cross-fade, and rotation (U4).
 //
 
 import AppKit
-import AVKit
 import AVFoundation
 
 @MainActor
 enum FullScreenPlayer {
     private static var window: OverlayWindow?
-    private static var player: AVQueuePlayer?
-    private static var looper: AVPlayerLooper?
-    private static var endObserver: NSObjectProtocol?
+    private static var controller: VideoPlayerController?
     private static var cursorTimer: Timer?
+
+    /// The controller currently on screen, so live settings changes (U6) can drive it.
+    static var activeController: VideoPlayerController? { controller }
 
     /// Play a single loop, seamlessly repeated.
     static func play(url: URL, title: String) {
-        let item = AVPlayerItem(url: url)
-        let queue = AVQueuePlayer()
-        looper = AVPlayerLooper(player: queue, templateItem: item)
-        present(queue: queue, title: title)
+        present(videos: [url], shuffle: false, crossFade: PlaybackSettings.defaultFade)
     }
 
-    /// Play the whole library as a looping, shuffled playlist.
-    static func playPlaylist(urls: [URL], title: String) {
+    /// Play a rotation of loops with cross-fades, optionally shuffled.
+    static func playPlaylist(urls: [URL], title: String,
+                             shuffle: Bool = true,
+                             crossFade: TimeInterval = PlaybackSettings.defaultFade) {
         guard !urls.isEmpty else { return }
-        let ordered = urls.shuffled()
-        let queue = AVQueuePlayer(items: ordered.map { AVPlayerItem(url: $0) })
-        // As each loop finishes, re-queue it at the end so the library cycles forever.
-        endObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main
-        ) { note in
-            guard let item = note.object as? AVPlayerItem,
-                  let asset = item.asset as? AVURLAsset else { return }
-            queue.insert(AVPlayerItem(url: asset.url), after: nil)
-        }
-        present(queue: queue, title: title)
+        present(videos: urls, shuffle: shuffle, crossFade: crossFade)
     }
 
     // MARK: - Presentation
 
-    private static func present(queue: AVQueuePlayer, title: String) {
+    private static func present(videos: [URL], shuffle: Bool, crossFade: TimeInterval) {
         close(animated: false)
-        queue.isMuted = true
-        player = queue
 
         let screen = NSScreen.main ?? NSScreen.screens.first
         let frame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
 
-        let playerView = AVPlayerView()
-        playerView.player = queue
-        playerView.controlsStyle = .none
-        playerView.videoGravity = .resizeAspect
-
         let container = NSView(frame: frame)
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.black.cgColor
-        playerView.frame = container.bounds
-        playerView.autoresizingMask = [.width, .height]
-        container.addSubview(playerView)
+
+        let vpc = VideoPlayerController(videos: videos, shuffle: shuffle)
+        vpc.setFadeDuration(crossFade)
+        vpc.setVideoGravity(.resizeAspect)   // letterbox — keep the whole frame visible
+        vpc.attach(to: container.layer!)
+        vpc.updateBounds(container.bounds)
+        controller = vpc
 
         let win = OverlayWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         win.contentView = container
@@ -80,7 +70,7 @@ enum FullScreenPlayer {
 
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
-        queue.play()
+        vpc.start()
         cursorActivity()
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.28
@@ -105,10 +95,8 @@ enum FullScreenPlayer {
         guard let win = window else { return }
         window = nil
         let teardown: () -> Void = {
-            player?.pause()
-            if let obs = endObserver { NotificationCenter.default.removeObserver(obs); endObserver = nil }
-            player = nil
-            looper = nil
+            controller?.stop()
+            controller = nil
             win.orderOut(nil)
             NSApp.presentationOptions = []
         }
