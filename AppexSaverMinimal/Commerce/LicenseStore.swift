@@ -29,8 +29,20 @@ final class LicenseStore: ObservableObject {
         case network      // couldn't reach the backend to verify
     }
 
+    /// The email magic-link sign-in flow, orthogonal to the unlock `state`
+    /// (sign-in is one way to arrive at `.unlocked`; pasting a key is the other).
+    enum SignInPhase: Equatable {
+        case idle
+        case sendingLink              // calling /v1/auth/start
+        case awaitingLink(email: String)  // "check your email — open the link on this Mac"
+        case exchanging               // callback arrived; calling /v1/auth/exchange
+        case linkExpired              // no/expired pending record, or an expired-link exchange
+        case noLicense                // authenticated, but this account has no active license
+    }
+
     @Published private(set) var state: State = .locked
     @Published private(set) var entryError: EntryError?
+    @Published private(set) var signIn: SignInPhase = .idle
 
     /// A Surrealism key: `SURR-XXXX-XXXX-XXXX`, groups from the key alphabet
     /// (Crockford-ish, no I/L/O/U). Broad enough to never reject a real key;
@@ -45,25 +57,37 @@ final class LicenseStore: ObservableObject {
 
     private let validator: LicenseValidating
     private let keychain: LicenseKeyStoring
+    private let auth: AccountAuthenticating
+    private let pendingStore: PendingAuthStoring
     private let defaults: UserDefaults
     private let deviceId: String
     private let graceInterval: TimeInterval
+    /// How long a pending magic-link sign-in stays valid (matches the link's own window).
+    private let pendingTTL: TimeInterval = 20 * 60
 
     private let kTier = "app.surrealism.tier"
     private let kPacks = "app.surrealism.packs"
     private let kLastValidated = "app.surrealism.lastValidated"
+    private let kEmail = "app.surrealism.signedInEmail"
 
     init(validator: LicenseValidating = LiveLicenseValidator(),
          keychain: LicenseKeyStoring = KeychainLicenseStore(),
+         auth: AccountAuthenticating = LiveAccountAuth(),
+         pendingStore: PendingAuthStoring = KeychainPendingAuthStore(),
          defaults: UserDefaults = .standard,
          deviceId: String = DeviceID.current,
          graceDays: Double = 14) {
         self.validator = validator
         self.keychain = keychain
+        self.auth = auth
+        self.pendingStore = pendingStore
         self.defaults = defaults
         self.deviceId = deviceId
         self.graceInterval = graceDays * 86_400
     }
+
+    /// The signed-in account email, for the unlocked panel's "Signed in as …" line.
+    var signedInEmail: String? { defaults.string(forKey: kEmail) }
 
     /// Dismiss the entry error (e.g. the user started correcting the key).
     func clearEntryError() { entryError = nil }
@@ -96,6 +120,75 @@ final class LicenseStore: ObservableObject {
         }
     }
 
+    // MARK: - Email sign-in (magic link + PKCE)
+
+    /// Dismiss the sign-in flow feedback (e.g. the user starts over).
+    func clearSignIn() { signIn = .idle }
+
+    /// Begin email sign-in: generate PKCE, persist the pending record (so a link
+    /// clicked after a quit still works), and ask the backend to email the link.
+    func signIn(email: String) async {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.contains("@") else { entryError = .invalidKey; return }
+        entryError = nil
+        let pkce = PKCE()
+        do {
+            try pendingStore.save(PendingAuth(email: trimmed, verifier: pkce.verifier, state: pkce.state, createdAt: Date()))
+            signIn = .sendingLink
+            try await auth.startLogin(email: trimmed, challenge: pkce.challenge, state: pkce.state)
+            signIn = .awaitingLink(email: trimmed)
+        } catch {
+            try? pendingStore.clear()
+            signIn = .idle
+            entryError = .network
+        }
+    }
+
+    /// Handle a surrealism:// deep link. Validates it against the pending sign-in
+    /// and, on a good callback, exchanges the code for the key.
+    func handleAuthCallback(_ url: URL) async {
+        // Expire a pending record older than the link window before matching.
+        let pending = pendingStore.load().flatMap {
+            Date().timeIntervalSince($0.createdAt) <= pendingTTL ? $0 : nil
+        }
+        switch AuthCallback.parse(url, expectedState: pending?.state) {
+        case .notAnAuthCallback, .malformed:
+            return                          // not ours / unusable → ignore
+        case .stateMismatch:
+            return                          // possible interception → ignore silently
+        case .noPendingSignIn:
+            signIn = .linkExpired           // link clicked too late, or nothing pending here
+        case .code(let code):
+            guard let pending else { signIn = .linkExpired; return }
+            await exchange(code: code, pending: pending)
+        }
+    }
+
+    private func exchange(code: String, pending: PendingAuth) async {
+        signIn = .exchanging
+        do {
+            let key = try await auth.exchange(code: code, verifier: pending.verifier, state: pending.state)
+            try? pendingStore.clear()
+            defaults.set(pending.email, forKey: kEmail)
+            // Feed the fetched key through the existing validate/activate/save path,
+            // so device_limit, offline grace, and revocation all behave as today.
+            await enter(key: key)
+            signIn = .idle
+        } catch AuthError.invalidGrant {
+            try? pendingStore.clear()
+            signIn = .linkExpired
+        } catch AuthError.noLicense {
+            try? pendingStore.clear()
+            signIn = .noLicense
+        } catch {
+            // Transient/unreachable — the code is single-use server-side, so don't
+            // keep the pending record; let the user request a fresh link.
+            try? pendingStore.clear()
+            signIn = .idle
+            entryError = .network
+        }
+    }
+
     /// Call on launch and periodically. Re-validates the stored key, honoring the
     /// offline grace window when the network is unreachable.
     func revalidateIfNeeded() async {
@@ -121,8 +214,11 @@ final class LicenseStore: ObservableObject {
     /// Remove the key (e.g. user signs out or a revoked key needs re-entry).
     func signOut() {
         try? keychain.clear()
+        try? pendingStore.clear()
         clearCache()
+        defaults.removeObject(forKey: kEmail)
         entryError = nil
+        signIn = .idle
         state = .locked
     }
 

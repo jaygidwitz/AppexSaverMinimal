@@ -26,8 +26,10 @@ private struct ShakeEffect: GeometryEffect {
 struct LicenseView: View {
     @ObservedObject var store: LicenseStore
     @State private var keyInput = ""
+    @State private var emailInput = ""
     @State private var shakeTrigger: CGFloat = 0
     @FocusState private var keyFocused: Bool
+    @FocusState private var emailFocused: Bool
 
     private let storeURL = URL(string: "https://surrealism.app")!
 
@@ -67,7 +69,8 @@ struct LicenseView: View {
                 SurrealismMark(size: 26)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Full library unlocked").font(.system(size: 15, weight: .semibold))
-                    Text(Self.tierLabel(tier)).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(store.signedInEmail.map { "Signed in as \($0)" } ?? Self.tierLabel(tier))
+                        .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button("Sign out") { store.signOut() }.buttonStyle(GhostButtonStyle())
@@ -80,6 +83,11 @@ struct LicenseView: View {
     @ViewBuilder private func entry(headline: String, sub: String) -> some View {
         let hasError = store.entryError != nil
         upsellHeader(title: headline, subtitle: sub)
+
+        // Primary path: sign in with email (magic link). Falls back to a pasted key.
+        signInBlock()
+        orDivider()
+
         HStack(spacing: 10) {
             TextField("SURR-XXXX-XXXX-XXXX", text: $keyInput)
                 .textFieldStyle(.plain)
@@ -121,6 +129,76 @@ struct LicenseView: View {
         }
         .buttonStyle(.plain)
         .padding(.top, 2)
+    }
+
+    // MARK: - Email sign-in
+
+    @ViewBuilder private func signInBlock() -> some View {
+        switch store.signIn {
+        case .idle:
+            HStack(spacing: 10) {
+                TextField("you@email.com", text: $emailInput)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 11)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.35))
+                            .overlay(RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(emailFocused ? Color.accentColor : .white.opacity(0.12), lineWidth: 1))
+                    )
+                    .frame(maxWidth: 300)
+                    .focused($emailFocused)
+                    .onSubmit(sendLink)
+                Button("Send sign-in link", action: sendLink)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(!emailInput.contains("@"))
+            }
+        case .sendingLink, .exchanging:
+            HStack(spacing: 10) {
+                ProgressView().controlSize(.small)
+                Text(store.signIn == .exchanging ? "Signing you in…" : "Sending your link…")
+                    .foregroundStyle(.secondary).font(.system(size: 13))
+            }
+        case .awaitingLink(let email):
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Check your email").font(.system(size: 15, weight: .semibold))
+                Text("We sent a sign-in link to \(email). Open it on this Mac to unlock.")
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
+                Button("Use a different email") { store.clearSignIn() }.buttonStyle(GhostButtonStyle())
+            }
+        case .linkExpired:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("That link expired").font(.system(size: 15, weight: .semibold))
+                Text("Sign-in links work once and expire quickly. Request a new one.")
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
+                Button("Try again") { store.clearSignIn() }.buttonStyle(PrimaryButtonStyle())
+            }
+        case .noLicense:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("No active license on this account").font(.system(size: 15, weight: .semibold))
+                Text("You're signed in, but this email has no active license.")
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Link("Get the full library", destination: storeURL).buttonStyle(PrimaryButtonStyle())
+                    Button("Use a different email") { store.clearSignIn() }.buttonStyle(GhostButtonStyle())
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func orDivider() -> some View {
+        HStack(spacing: 10) {
+            Rectangle().fill(.white.opacity(0.1)).frame(height: 1)
+            Text("or paste a key").font(.system(size: 11)).foregroundStyle(.secondary).fixedSize()
+            Rectangle().fill(.white.opacity(0.1)).frame(height: 1)
+        }
+        .frame(maxWidth: 300)
+    }
+
+    private func sendLink() {
+        let email = emailInput
+        Task { await store.signIn(email: email) }
     }
 
     @ViewBuilder private func upsellHeader(title: String, subtitle: String) -> some View {

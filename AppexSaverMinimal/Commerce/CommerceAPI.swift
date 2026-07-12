@@ -61,6 +61,67 @@ struct LiveLicenseValidator: LicenseValidating {
     }
 }
 
+// MARK: - Account auth (app-side magic-link login)
+
+/// Response from POST /v1/auth/exchange — the account's license key, TLS body only.
+struct ExchangeResponse: Decodable { let key: String }
+
+enum AuthError: Error {
+    case invalidGrant     // expired/used link, or PKCE/state mismatch (HTTP 400)
+    case noLicense        // authenticated, but the account has no active license (HTTP 404)
+    case network(Int)     // transient/unreachable (429/5xx) — retryable, not a bad link
+    case malformed
+}
+
+protocol AccountAuthenticating {
+    /// Begin app login: send the email + PKCE challenge; the backend emails the link.
+    func startLogin(email: String, challenge: String, state: String) async throws
+    /// Exchange the one-time callback code (+ verifier) for the license key.
+    func exchange(code: String, verifier: String, state: String) async throws -> String
+}
+
+struct LiveAccountAuth: AccountAuthenticating {
+    var session: URLSession = .shared
+    var baseURL: URL = CommerceAPI.baseURL
+
+    func startLogin(email: String, challenge: String, state: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("v1/auth/start"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "email": email,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "state": state,
+        ])
+        request.timeoutInterval = 20
+        let (_, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw AuthError.malformed }
+        guard (200...299).contains(http.statusCode) else { throw AuthError.network(http.statusCode) }
+    }
+
+    func exchange(code: String, verifier: String, state: String) async throws -> String {
+        var request = URLRequest(url: baseURL.appendingPathComponent("v1/auth/exchange"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Secrets (code, verifier, and the returned key) travel in the body, never the URL.
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "code": code, "code_verifier": verifier, "state": state,
+        ])
+        request.timeoutInterval = 20
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw AuthError.malformed }
+        switch http.statusCode {
+        case 200...299:
+            do { return try JSONDecoder().decode(ExchangeResponse.self, from: data).key }
+            catch { throw AuthError.malformed }
+        case 400: throw AuthError.invalidGrant   // invalid_grant / invalid_request → treat as a bad/expired link
+        case 404: throw AuthError.noLicense
+        default: throw AuthError.network(http.statusCode)  // 429/5xx are transient
+        }
+    }
+}
+
 // MARK: - Catalog (U10)
 
 /// One loop as returned by GET /v1/catalog. `entitled` reflects the caller's tier.
