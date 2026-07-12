@@ -98,6 +98,11 @@ final class LoopDownloader: ObservableObject {
         let dest = destination(for: loop.id)
         try? FileManager.default.removeItem(at: dest)
         try FileManager.default.moveItem(at: tempURL, to: dest)
+        // The /Users/Shared cache must be world-readable: the SANDBOXED screensaver
+        // extension reads it, and on macOS 26 it cannot read the 0600 perms a
+        // URLSession download temp file lands with — an unreadable cache makes the
+        // saver fall back to the rainbow gradient (no video).
+        try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: dest.path)
     }
 
     private func destination(for loopId: String) -> URL {
