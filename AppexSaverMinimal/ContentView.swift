@@ -225,6 +225,9 @@ struct ContentView: View {
                     hero
                     VStack(alignment: .leading, spacing: 28) {
                         screensaverSection
+                        if !library.videos.isEmpty {
+                            PlaybackControlsView(settings: playback, videos: library.videos)
+                        }
                         librarySection
                         LicenseView(store: license)
                         CatalogView(model: catalog, downloader: downloader,
