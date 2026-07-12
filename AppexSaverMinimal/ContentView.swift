@@ -206,6 +206,7 @@ struct ContentView: View {
     // Shared, app-owned: the magic-link callback (handled in AppDelegate) must
     // update the same store this window's sign-in UI is bound to.
     @EnvironmentObject private var license: LicenseStore
+    @EnvironmentObject private var playback: PlaybackSettings
     @StateObject private var catalog = CatalogModel()
     @StateObject private var downloader = LoopDownloader()
     @State private var previewToken = 0

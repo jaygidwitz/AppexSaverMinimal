@@ -18,6 +18,9 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let license = LicenseStore()
+    /// Shared playback settings (shuffle / cross-fade / rotation), app-owned so
+    /// every surface observes one source of truth.
+    let playback = PlaybackSettings()
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
@@ -34,6 +37,7 @@ struct AppexSaverMinimalApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appDelegate.license)
+                .environmentObject(appDelegate.playback)
                 // Let the existing window claim external (surrealism://) events so a
                 // magic-link open reuses this window instead of spawning a new one.
                 .handlesExternalEvents(preferring: ["main"], allowing: ["*"])
