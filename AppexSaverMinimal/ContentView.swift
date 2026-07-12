@@ -239,6 +239,8 @@ struct ContentView: View {
         .navigationTitle("Surrealism")
         .onAppear { library.reload() }
         .task { await license.revalidateIfNeeded() }
+        // Magic-link return: surrealism://auth/callback?code=&state=
+        .onOpenURL { url in Task { await license.handleAuthCallback(url) } }
     }
 
     private func bumpPreview() { previewToken += 1 }
