@@ -64,6 +64,8 @@ final class VideoPlayerController {
     // Test hooks (internal so @testable can read; harmless in production).
     var testPlaylist: [URL] { playlist }
     var testFadeDuration: TimeInterval { fadeDuration }
+    /// Transport state — read by the shared command layer (U1) and tests.
+    var isPaused: Bool { paused }
 
     init(videos: [URL], shuffle: Bool = true) {
         self.playlist = shuffle ? videos.shuffled() : videos
