@@ -694,6 +694,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = AppexSaverMinimalExtension/AppexSaverMinimalExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8FYWMC4BJ3;
 				ENABLE_APP_SANDBOX = YES;
@@ -731,6 +732,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = AppexSaverMinimalExtension/AppexSaverMinimalExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8FYWMC4BJ3;
 				ENABLE_APP_SANDBOX = YES;
