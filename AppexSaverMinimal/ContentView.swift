@@ -210,6 +210,10 @@ struct ContentView: View {
     @StateObject private var catalog = CatalogModel()
     @StateObject private var downloader = LoopDownloader()
     @State private var previewToken = 0
+    // Transient view state: "Choose Loops" mode turns the library grid into a
+    // rotation picker (owned here since ContentView renders both the panel and
+    // the grid). Not persisted — see PlaybackControlsView plan KTD2.
+    @State private var isSelectingRotation = false
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
 
@@ -226,7 +230,8 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         screensaverSection
                         if !library.videos.isEmpty {
-                            PlaybackControlsView(settings: playback, videos: library.videos)
+                            PlaybackControlsView(settings: playback, videos: library.videos,
+                                                 isSelecting: $isSelectingRotation)
                         }
                         librarySection
                         LicenseView(store: license)
@@ -360,8 +365,19 @@ struct ContentView: View {
         .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.04)))
     }
 
+    /// Stable identifiers for the current library — passed to the rotation
+    /// normalizer so it knows what "all loops" means right now.
+    private var currentIdentifiers: [String] {
+        library.videos.map { RotationResolver.identifier(for: $0.url) }
+    }
+
     private func cell(_ video: LibraryVideo) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let id = RotationResolver.identifier(for: video.url)
+        let selecting = isSelectingRotation
+        // Empty rotation = all loops, so every tile reads as selected in that state.
+        let selected = playback.rotation.isEmpty || playback.rotation.contains(id)
+        let accent = Color(red: 0.55, green: 0.4, blue: 0.95)
+        return VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topTrailing) {
                 Group {
                     if let thumb = video.thumbnail {
@@ -373,23 +389,48 @@ struct ContentView: View {
                 }
                 .frame(height: 124).frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.08)))
+                .overlay {
+                    // Dim tiles that are out of rotation while choosing.
+                    if selecting && !selected {
+                        RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.45))
+                    }
+                }
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(
+                    selecting && selected ? accent.opacity(0.9) : .white.opacity(0.08),
+                    lineWidth: selecting && selected ? 2 : 1))
                 .overlay(alignment: .center) {
-                    Image(systemName: "play.circle.fill").font(.system(size: 30))
-                        .foregroundStyle(.white.opacity(0.9)).shadow(radius: 5)
+                    if !selecting {
+                        Image(systemName: "play.circle.fill").font(.system(size: 30))
+                            .foregroundStyle(.white.opacity(0.9)).shadow(radius: 5)
+                    }
                 }
                 .contentShape(RoundedRectangle(cornerRadius: 10))
-                .onTapGesture { FullScreenPlayer.play(url: video.url, title: video.displayName) }
-                .help("Click to play full screen")
-
-                Button(role: .destructive) {
-                    library.remove(video) { bumpPreview() }
-                } label: {
-                    Image(systemName: "xmark.circle.fill").font(.system(size: 20))
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .black.opacity(0.55))
+                .onTapGesture {
+                    if selecting {
+                        playback.setSelected(id, isOn: !selected, allIdentifiers: currentIdentifiers)
+                    } else {
+                        FullScreenPlayer.play(url: video.url, title: video.displayName)
+                    }
                 }
-                .buttonStyle(.plain).padding(8).help("Remove this loop")
+                .help(selecting ? "Tap to add or remove from rotation" : "Click to play full screen")
+
+                if selecting {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(selected ? Color.white : Color.white.opacity(0.85),
+                                         selected ? accent : Color.black.opacity(0.45))
+                        .padding(8)
+                } else {
+                    Button(role: .destructive) {
+                        library.remove(video) { bumpPreview() }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 20))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .black.opacity(0.55))
+                    }
+                    .buttonStyle(.plain).padding(8).help("Remove this loop")
+                }
             }
             Text(video.displayName).font(.callout.weight(.medium)).lineLimit(1)
             Text(LibraryViewModel.formatted(video.bytes)).font(.caption).foregroundStyle(.white.opacity(0.45))

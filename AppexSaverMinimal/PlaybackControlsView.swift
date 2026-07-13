@@ -12,8 +12,11 @@ import SwiftUI
 struct PlaybackControlsView: View {
     @ObservedObject var settings: PlaybackSettings
     let videos: [LibraryVideo]
+    /// "Choose Loops" mode, owned by ContentView (KTD2). The panel flips it; the
+    /// library grid reads it to switch tile behavior.
+    @Binding var isSelecting: Bool
 
-    private let chipColumns = [GridItem(.adaptive(minimum: 96), spacing: 8)]
+    private let accent = Color(red: 0.55, green: 0.4, blue: 0.95)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -31,7 +34,7 @@ struct PlaybackControlsView: View {
                 }
             }
             .toggleStyle(.switch)
-            .tint(Color(red: 0.55, green: 0.4, blue: 0.95))
+            .tint(accent)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -43,25 +46,22 @@ struct PlaybackControlsView: View {
                 Slider(value: Binding(get: { settings.crossFadeSeconds },
                                       set: { settings.setCrossFadeSeconds($0) }),
                        in: PlaybackSettings.fadeRange)
-                    .tint(Color(red: 0.55, green: 0.4, blue: 0.95))
+                    .tint(accent)
             }
 
             if !videos.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text("In rotation").font(.system(size: 14, weight: .medium))
-                        Spacer()
                         Text(rotationSummary).font(.system(size: 12)).foregroundStyle(.secondary)
-                        if !settings.rotation.isEmpty {
-                            Button("All") { settings.setRotation([]) }
-                                .buttonStyle(GhostButtonStyle()).controlSize(.small)
-                        }
                     }
-                    LazyVGrid(columns: chipColumns, alignment: .leading, spacing: 8) {
-                        ForEach(videos) { video in
-                            chip(for: video)
-                        }
+                    Spacer()
+                    if isSelecting && !settings.rotation.isEmpty {
+                        Button("All") { settings.setRotation([]) }
+                            .buttonStyle(GhostButtonStyle()).controlSize(.small)
                     }
+                    Button(isSelecting ? "Done" : "Choose…") { isSelecting.toggle() }
+                        .buttonStyle(GhostButtonStyle()).controlSize(.small)
                 }
             }
         }
@@ -72,32 +72,13 @@ struct PlaybackControlsView: View {
     }
 
     private var rotationSummary: String {
-        settings.rotation.isEmpty ? "All \(videos.count) loops" : "\(inRotationCount) of \(videos.count)"
+        settings.rotation.isEmpty
+            ? "All \(videos.count) loops"
+            : "\(inRotationCount) of \(videos.count) loops"
     }
 
     /// How many of the *current* library are selected (ignores stale ids).
     private var inRotationCount: Int {
         videos.filter { settings.rotation.contains(RotationResolver.identifier(for: $0.url)) }.count
-    }
-
-    @ViewBuilder private func chip(for video: LibraryVideo) -> some View {
-        let id = RotationResolver.identifier(for: video.url)
-        // Empty rotation = all loops, so every chip reads as "on" in that state.
-        let on = settings.rotation.isEmpty || settings.rotation.contains(id)
-        Button { settings.toggle(id) } label: {
-            Text(video.displayName)
-                .font(.system(size: 12, weight: .medium))
-                .lineLimit(1)
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule().fill(on ? Color(red: 0.45, green: 0.3, blue: 0.9).opacity(0.35)
-                                       : Color.white.opacity(0.05))
-                )
-                .overlay(Capsule().strokeBorder(on ? Color(red: 0.6, green: 0.45, blue: 0.95).opacity(0.6)
-                                                    : .white.opacity(0.12), lineWidth: 1))
-                .foregroundStyle(on ? .white : .secondary)
-        }
-        .buttonStyle(.plain)
     }
 }

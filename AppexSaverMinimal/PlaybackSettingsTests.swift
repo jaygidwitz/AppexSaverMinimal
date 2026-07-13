@@ -81,4 +81,68 @@ final class PlaybackSettingsTests: XCTestCase {
         let b = PlaybackSettings(defaults: defaults)
         XCTAssertTrue(b.rotation.isEmpty)
     }
+
+    // MARK: - setSelected (tile picker, U1)
+
+    private let all3 = ["loop-01", "loop-02", "loop-03"]
+
+    func testSetSelected_deselectFromAll_materializesAllMinusOne() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        // Fresh store is empty = all.
+        store.setSelected("loop-02", isOn: false, allIdentifiers: all3)
+        XCTAssertEqual(store.rotation, ["loop-01", "loop-03"])
+    }
+
+    func testSetSelected_selectLast_collapsesToEmptySentinel() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        store.setRotation(["loop-01", "loop-03"])
+        store.setSelected("loop-02", isOn: true, allIdentifiers: all3)
+        XCTAssertTrue(store.rotation.isEmpty, "covers all ⇒ collapse to sentinel")
+    }
+
+    func testSetSelected_partialDeselect_staysPartial() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        store.setRotation(["loop-01", "loop-02"])
+        store.setSelected("loop-01", isOn: false, allIdentifiers: all3)
+        XCTAssertEqual(store.rotation, ["loop-02"])
+    }
+
+    func testSetSelected_oneLoopFloor_isNoOp() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        store.setRotation(["loop-02"])
+        store.setSelected("loop-02", isOn: false, allIdentifiers: all3)
+        XCTAssertEqual(store.rotation, ["loop-02"], "cannot deselect the last loop (R6)")
+    }
+
+    func testSetSelected_floorFromAllReachesOneNotZero() {
+        let store = PlaybackSettings(defaults: makeDefaults()) // empty = all
+        store.setSelected("loop-01", isOn: false, allIdentifiers: all3)
+        store.setSelected("loop-02", isOn: false, allIdentifiers: all3)
+        XCTAssertEqual(store.rotation, ["loop-03"])
+        store.setSelected("loop-03", isOn: false, allIdentifiers: all3) // floor
+        XCTAssertEqual(store.rotation, ["loop-03"], "never empties to zero loops")
+    }
+
+    func testIsAllSelected_reflectsCoverage() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        XCTAssertTrue(store.isAllSelected(allIdentifiers: all3), "empty = all")
+        store.setRotation(["loop-01", "loop-02", "loop-03"])
+        XCTAssertTrue(store.isAllSelected(allIdentifiers: all3), "lists every current id")
+        store.setRotation(["loop-01"])
+        XCTAssertFalse(store.isAllSelected(allIdentifiers: all3), "strict subset")
+    }
+
+    func testIsAllSelected_staleIdsDoNotCountAsAll() {
+        let store = PlaybackSettings(defaults: makeDefaults())
+        store.setRotation(["loop-01", "gone-99"])
+        XCTAssertFalse(store.isAllSelected(allIdentifiers: ["loop-01", "loop-02"]))
+    }
+
+    func testSetSelected_persistsNormalizedSet() {
+        let defaults = makeDefaults()
+        let a = PlaybackSettings(defaults: defaults)
+        a.setSelected("loop-02", isOn: false, allIdentifiers: all3) // → {01,03}
+        let b = PlaybackSettings(defaults: defaults)
+        XCTAssertEqual(b.rotation, ["loop-01", "loop-03"])
+    }
 }

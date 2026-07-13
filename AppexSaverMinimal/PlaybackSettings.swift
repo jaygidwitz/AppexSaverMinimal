@@ -69,6 +69,31 @@ final class PlaybackSettings: ObservableObject {
         setRotation(next)
     }
 
+    /// Toggle one loop's rotation membership from the tile picker while
+    /// preserving the "empty = all" invariant (R5) and the one-loop floor (R6).
+    /// The on-screen selection expands the empty sentinel to `allIdentifiers`
+    /// before applying, then re-collapses to empty when every current loop is
+    /// covered — so "all" keeps meaning "all" as the library grows.
+    func setSelected(_ id: String, isOn: Bool, allIdentifiers: [String]) {
+        let all = Set(allIdentifiers)
+        var current = rotation.isEmpty ? all : rotation
+        if isOn {
+            current.insert(id)
+        } else {
+            current.remove(id)
+            if current.isEmpty { return } // R6: a screensaver must play something.
+        }
+        // Covers every current loop ⇒ collapse back to the "all" sentinel (R5).
+        setRotation(all.isSubset(of: current) ? [] : current)
+    }
+
+    /// Whether every current loop is in rotation — true for the empty "all"
+    /// sentinel, or when the stored set lists every current identifier. Stale
+    /// ids in the set don't count toward "covers all".
+    func isAllSelected(allIdentifiers: [String]) -> Bool {
+        rotation.isEmpty || Set(allIdentifiers).isSubset(of: rotation)
+    }
+
     private static func clampFade(_ v: Double) -> Double {
         min(max(v, fadeRange.lowerBound), fadeRange.upperBound)
     }
