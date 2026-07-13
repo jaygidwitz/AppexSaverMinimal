@@ -11,6 +11,15 @@
 
 import SwiftUI
 
+extension ProcessInfo {
+    /// True when the process was launched by XCTest (the app is acting as the
+    /// unit-test host). XCTest sets `XCTestConfigurationFilePath` in the
+    /// environment of the host it injects into.
+    var isRunningUnitTests: Bool {
+        environment["XCTestConfigurationFilePath"] != nil
+    }
+}
+
 /// App-level delegate so the magic-link callback (surrealism://auth/callback) is
 /// handled once at the process level and routed to the shared LicenseStore —
 /// instead of a per-window `.onOpenURL`, which spawns a second window and hits a
@@ -35,12 +44,21 @@ struct AppexSaverMinimalApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(appDelegate.license)
-                .environmentObject(appDelegate.playback)
-                // Let the existing window claim external (surrealism://) events so a
-                // magic-link open reuses this window instead of spawning a new one.
-                .handlesExternalEvents(preferring: ["main"], allowing: ["*"])
+            // As the unit-test host, don't mount the real UI: ContentView's
+            // launch `.task` (license revalidation) and CatalogView's catalog
+            // load fire real network requests that hang the test host offline.
+            // Tests build their own objects via `@testable import`, so the
+            // window content is irrelevant to them.
+            if ProcessInfo.processInfo.isRunningUnitTests {
+                EmptyView()
+            } else {
+                ContentView()
+                    .environmentObject(appDelegate.license)
+                    .environmentObject(appDelegate.playback)
+                    // Let the existing window claim external (surrealism://) events so a
+                    // magic-link open reuses this window instead of spawning a new one.
+                    .handlesExternalEvents(preferring: ["main"], allowing: ["*"])
+            }
         }
         .handlesExternalEvents(matching: ["main"])
         .defaultSize(width: 720, height: 860)
