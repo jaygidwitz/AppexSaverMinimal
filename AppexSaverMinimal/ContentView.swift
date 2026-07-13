@@ -301,20 +301,17 @@ struct ContentView: View {
                         let active = RotationResolver.activeURLs(
                             rotation: playback.rotation,
                             library: library.videos.map(\.url))
-                        FullScreenPlayer.playPlaylist(urls: active, title: "Surrealism",
-                                                      shuffle: playback.shuffle,
-                                                      crossFade: playback.crossFadeSeconds,
-                                                      liveSettings: playback,
-                                                      library: { library.videos.map(\.url) })
+                        TheaterWindow.present(urls: active, settings: playback,
+                                              library: { library.videos.map(\.url) })
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "play.fill")
-                            Text("Play all")
+                            Text("Watch in Theater")
                         }
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .padding(28)
-                    .help("Play the whole library full screen")
+                    .help("Watch the rotation with transport controls (Space, →, S, [ ], F, Esc)")
                 }
             }
             .clipped()
