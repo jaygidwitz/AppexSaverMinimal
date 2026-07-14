@@ -218,6 +218,10 @@ struct ContentView: View {
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
 
+    /// Readable max content width — keeps the app from stretching edge-to-edge
+    /// (giant sliders, corner-flung hero buttons) on wide displays.
+    private let contentMaxWidth: CGFloat = 1160
+
     private let backdrop = LinearGradient(
         colors: [Color(red: 0.09, green: 0.05, blue: 0.17), Color(red: 0.02, green: 0.02, blue: 0.05)],
         startPoint: .top, endPoint: .bottom)
@@ -240,8 +244,9 @@ struct ContentView: View {
                                     onLibraryChanged: { library.reload() })
                         storeSection
                     }
+                    .frame(maxWidth: contentMaxWidth, alignment: .leading)
                     .padding(30)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity)   // center the column on wide displays
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -281,24 +286,28 @@ struct ContentView: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .allowsHitTesting(false)
             }
-            .overlay(alignment: .bottomLeading) {
-                HStack(spacing: 13) {
-                    SurrealismMark(size: 42)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Surrealism")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundStyle(.white)
-                        Text("Video Screensaver")
-                            .font(.title3)
-                            .foregroundStyle(.white.opacity(0.75))
+            .overlay(alignment: .bottom) {
+                // Title (leading) and actions (trailing) share one row with a
+                // Spacer so they compress instead of overlapping on narrow widths.
+                HStack(alignment: .bottom, spacing: 16) {
+                    HStack(spacing: 13) {
+                        SurrealismMark(size: 42)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Surrealism")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundStyle(.white)
+                            Text("Video Screensaver")
+                                .font(.title3)
+                                .foregroundStyle(.white.opacity(0.75))
+                        }
                     }
-                }
-                .padding(28)
-                .shadow(color: .black.opacity(0.5), radius: 8, y: 1)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                if !library.videos.isEmpty {
-                    HStack(spacing: 10) {
+                    .shadow(color: .black.opacity(0.5), radius: 8, y: 1)
+                    .layoutPriority(1)
+
+                    Spacer(minLength: 16)
+
+                    if !library.videos.isEmpty {
+                        HStack(spacing: 10) {
                         if ambient.wallpaperActive {
                             Button { AppDelegate.shared?.toggleWallpaperPause() } label: {
                                 HStack(spacing: 8) {
@@ -348,9 +357,12 @@ struct ContentView: View {
                         }
                         .buttonStyle(PrimaryButtonStyle())
                         .help("Watch the rotation with transport controls (Space, →, [ ], F, Esc)")
+                        }
                     }
-                    .padding(28)
                 }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(28)
+                .frame(maxWidth: .infinity)
             }
             .clipped()
     }
