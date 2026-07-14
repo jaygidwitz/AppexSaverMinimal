@@ -44,7 +44,10 @@ struct CatalogView: View {
         VStack(alignment: .leading, spacing: 8) {
             thumbnail(loop)
             Text(loop.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
+            // Fixed-height action area so cards stay uniform whether they show
+            // "Unlock →", "Download", or "In library / Remove".
             actionRow(loop)
+                .frame(maxWidth: .infinity, minHeight: 34, alignment: .topLeading)
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.04)))
@@ -104,13 +107,15 @@ struct CatalogView: View {
     }
 
     private func tag(_ text: String, color: Color) -> some View {
+        // Dark pill (not ultraThinMaterial, which washes out over bright posters)
+        // so the label stays readable on any thumbnail.
         Text(text.uppercased())
             .font(.system(size: 9, weight: .bold)).tracking(0.6)
-            .foregroundStyle(color)
+            .foregroundStyle(color == .gray ? Color.white.opacity(0.9) : color)
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().strokeBorder(color.opacity(0.45), lineWidth: 1))
-            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+            .background(Color.black.opacity(0.55), in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.28), lineWidth: 1))
+            .shadow(color: .black.opacity(0.45), radius: 3, y: 1)
     }
 
     @ViewBuilder private func actionRow(_ loop: CatalogLoop) -> some View {

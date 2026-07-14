@@ -60,6 +60,7 @@ final class VideoPlayerController {
     private var endObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
     private var pendingFinish: DispatchWorkItem?
+    private var readyObservation: NSKeyValueObservation?
 
     var hasVideos: Bool { !playlist.isEmpty }
 
@@ -123,6 +124,7 @@ final class VideoPlayerController {
     /// new set — crossing the single-clip⇄multi-clip boundary safely.
     func setRotation(_ urls: [URL], shuffle: Bool) {
         pendingFinish?.cancel(); pendingFinish = nil
+        readyObservation = nil
         transitioning = false
         removeTimeObserver()
         if let endObserver { NotificationCenter.default.removeObserver(endObserver); self.endObserver = nil }
@@ -204,6 +206,7 @@ final class VideoPlayerController {
         started = false
         transitioning = false
         pendingFinish?.cancel(); pendingFinish = nil
+        readyObservation = nil
         looper?.disableLooping(); looper = nil
         removeTimeObserver()
         if let endObserver { NotificationCenter.default.removeObserver(endObserver); self.endObserver = nil }
@@ -262,21 +265,39 @@ final class VideoPlayerController {
         next.player.seek(to: .zero)
         playAtRate(next.player)
 
-        // Cross-fade
-        fade(next.layer, to: 1, duration: fadeSecs)
-        fade(current.layer, to: 0, duration: fadeSecs)
-
-        let finish = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            current.player.pause()
-            current.player.removeAllItems()
-            self.active = 1 - self.active
-            self.index = nextIndex
-            self.transitioning = false
-            if self.started { self.watchForEnd(of: self.slots[self.active]) }
+        // Start the cross-fade only once the incoming layer has a frame ready to
+        // display, so it never fades in from black (the boundary flash). A short
+        // fallback runs the fade anyway if readiness never arrives. Both layers'
+        // fades start together so they cross-blend with no gap.
+        readyObservation = nil
+        var didStart = false
+        let startCrossfade: () -> Void = { [weak self] in
+            guard let self, self.transitioning, !didStart else { return }
+            didStart = true
+            self.readyObservation = nil
+            self.fade(next.layer, to: 1, duration: fadeSecs)
+            self.fade(current.layer, to: 0, duration: fadeSecs)
+            let finish = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                current.player.pause()
+                current.player.removeAllItems()
+                self.active = 1 - self.active
+                self.index = nextIndex
+                self.transitioning = false
+                if self.started { self.watchForEnd(of: self.slots[self.active]) }
+            }
+            self.pendingFinish = finish
+            DispatchQueue.main.asyncAfter(deadline: .now() + fadeSecs, execute: finish)
         }
-        pendingFinish = finish
-        DispatchQueue.main.asyncAfter(deadline: .now() + fadeSecs, execute: finish)
+
+        if next.layer.isReadyForDisplay {
+            startCrossfade()
+        } else {
+            readyObservation = next.layer.observe(\.isReadyForDisplay, options: [.new]) { layer, _ in
+                if layer.isReadyForDisplay { DispatchQueue.main.async(execute: startCrossfade) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: startCrossfade)  // fallback
+        }
     }
 
     // MARK: - Fade
