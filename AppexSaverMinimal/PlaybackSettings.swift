@@ -23,6 +23,10 @@ final class PlaybackSettings: ObservableObject {
     @Published private(set) var crossFadeSeconds: Double
     /// The loops in rotation, by stable identifier (file stem). Empty = all loops.
     @Published private(set) var rotation: Set<String>
+    /// Playback speed: 1 = normal, below 1 = slow motion. Shared across surfaces.
+    @Published private(set) var playbackRate: Double
+    /// Battery/thermal courtesy for wallpaper — pause when unplugged/hot (R14).
+    @Published private(set) var courtesyEnabled: Bool
 
     /// Accepted cross-fade range; the effective fade is additionally clamped
     /// against the current clip's length inside the engine (see VideoPlayerController).
@@ -30,10 +34,16 @@ final class PlaybackSettings: ObservableObject {
     /// Default cross-fade — matches the value the screensaver has always used.
     static let defaultFade: Double = 1.4
 
+    /// Accepted speed range: quarter-speed slow motion up to normal.
+    static let rateRange: ClosedRange<Double> = 0.25...1.0
+    static let defaultRate: Double = 1.0
+
     private let defaults: UserDefaults
     private let kShuffle = "app.surrealism.playback.shuffle"
     private let kCrossFade = "app.surrealism.playback.crossFade"
     private let kRotation = "app.surrealism.playback.rotation"
+    private let kRate = "app.surrealism.playback.rate"
+    private let kCourtesy = "app.surrealism.playback.courtesy"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -41,6 +51,14 @@ final class PlaybackSettings: ObservableObject {
         let storedFade = defaults.object(forKey: kCrossFade) as? Double ?? Self.defaultFade
         self.crossFadeSeconds = Self.clampFade(storedFade)
         self.rotation = Set(defaults.stringArray(forKey: kRotation) ?? [])
+        let storedRate = defaults.object(forKey: kRate) as? Double ?? Self.defaultRate
+        self.playbackRate = Self.clampRate(storedRate)
+        self.courtesyEnabled = defaults.object(forKey: kCourtesy) as? Bool ?? true
+    }
+
+    func setCourtesyEnabled(_ on: Bool) {
+        courtesyEnabled = on
+        defaults.set(on, forKey: kCourtesy)
     }
 
     func setShuffle(_ on: Bool) {
@@ -94,7 +112,18 @@ final class PlaybackSettings: ObservableObject {
         rotation.isEmpty || Set(allIdentifiers).isSubset(of: rotation)
     }
 
+    /// Set playback speed, clamped to `rateRange`. Applied live to running surfaces.
+    func setPlaybackRate(_ rate: Double) {
+        let clamped = Self.clampRate(rate)
+        playbackRate = clamped
+        defaults.set(clamped, forKey: kRate)
+    }
+
     private static func clampFade(_ v: Double) -> Double {
         min(max(v, fadeRange.lowerBound), fadeRange.upperBound)
+    }
+
+    private static func clampRate(_ v: Double) -> Double {
+        min(max(v, rateRange.lowerBound), rateRange.upperBound)
     }
 }

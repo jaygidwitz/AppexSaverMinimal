@@ -12,8 +12,10 @@ final class PlaybackPropagationTests: XCTestCase {
     private final class FakeEngine: PlaybackEngine {
         var fadeDurations: [TimeInterval] = []
         var rotations: [(urls: [URL], shuffle: Bool)] = []
+        var rates: [Float] = []
         func setFadeDuration(_ seconds: TimeInterval) { fadeDurations.append(seconds) }
         func setRotation(_ urls: [URL], shuffle: Bool) { rotations.append((urls, shuffle)) }
+        func setRate(_ rate: Float) { rates.append(rate) }
     }
 
     private func makeSettings() -> PlaybackSettings {
@@ -35,6 +37,14 @@ final class PlaybackPropagationTests: XCTestCase {
         let prop = PlaybackPropagator(settings: settings, engine: engine, library: { [] })
         settings.setCrossFadeSeconds(2.5)
         XCTAssertEqual(engine.fadeDurations.last, 2.5)
+        _ = prop
+    }
+
+    func testRateChange_invokesSetRate_immediately() {
+        let settings = makeSettings(); let engine = FakeEngine()
+        let prop = PlaybackPropagator(settings: settings, engine: engine, library: { [] })
+        settings.setPlaybackRate(0.5)
+        XCTAssertEqual(engine.rates.last, 0.5)
         _ = prop
     }
 

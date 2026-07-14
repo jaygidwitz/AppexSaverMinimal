@@ -11,6 +11,16 @@
 
 import SwiftUI
 
+/// Observable ambient-surface state for the host UI (wallpaper running/paused),
+/// injected via the environment so ContentView can show live controls.
+@MainActor
+final class AmbientState: ObservableObject {
+    @Published fileprivate(set) var wallpaperActive = false
+    @Published fileprivate(set) var wallpaperPaused = false
+    /// Non-nil when the pause was courtesy-driven (e.g. "on battery") vs a user pause.
+    @Published fileprivate(set) var pausedReason: String?
+}
+
 extension ProcessInfo {
     /// True when the process was launched by XCTest (the app is acting as the
     /// unit-test host). XCTest sets `XCTestConfigurationFilePath` in the
@@ -26,15 +36,90 @@ extension ProcessInfo {
 /// different store instance than the one showing "Check your email".
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// SwiftUI's `@NSApplicationDelegateAdaptor` does not reliably expose this
+    /// instance via `NSApp.delegate as? AppDelegate` (it can read back as the bare
+    /// `NSApplicationDelegate` existential), so surfaces reach it through here.
+    static private(set) weak var shared: AppDelegate?
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
     let license = LicenseStore()
     /// Shared playback settings (shuffle / cross-fade / rotation), app-owned so
     /// every surface observes one source of truth.
     let playback = PlaybackSettings()
+    /// Live ambient state for the host UI (wallpaper running/paused).
+    let ambient = AmbientState()
+
+    // Desktop wallpaper surface (U3/U4) is owned here, at app level, so it outlives
+    // the main window. The menu-bar agent + its commands live and die with it.
+    private lazy var wallpaper = WallpaperController(settings: playback,
+                                                     library: { VideoCache.videos() })
+    private var wallpaperCommands: PlaybackCommands?
+    private var menuBar: MenuBarAgent?
+
+    var isWallpaperActive: Bool { wallpaper.isActive }
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             Task { await license.handleAuthCallback(url) }
         }
+    }
+
+    /// Keep the process (and the running wallpaper) alive when the main window is
+    /// closed — a WindowGroup app otherwise quits on last-window-close (KTD4).
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        AmbientLifecycle.shouldTerminateAfterLastWindowClosed(wallpaperActive: wallpaper.isActive)
+    }
+
+    /// Dock-icon click / reactivation reopens the main WindowGroup window.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        true
+    }
+
+    // MARK: Wallpaper control (called from the host UI + menu-bar agent)
+
+    func startWallpaper() {
+        guard !wallpaper.isActive, !VideoCache.videos().isEmpty else { return }
+        wallpaper.onCourtesyChange = { [weak self] pause, reason in
+            self?.ambient.wallpaperPaused = pause
+            self?.ambient.pausedReason = reason
+        }
+        wallpaper.start()
+        let cmd = PlaybackCommands(settings: playback,
+                                   controllers: { [weak self] in self?.wallpaper.controllers ?? [] })
+        cmd.onStop = { [weak self] in self?.stopWallpaper() }
+        wallpaperCommands = cmd
+        let agent = MenuBarAgent(
+            onTogglePause: { [weak self] in self?.toggleWallpaperPause() },
+            onNext: { cmd.next() },
+            onStopWallpaper: { [weak self] in self?.stopWallpaper() },
+            onOpen: { NSApp.activate(ignoringOtherApps: true) },
+            onQuit: { NSApp.terminate(nil) })
+        agent.install()
+        menuBar = agent
+        ambient.wallpaperActive = true
+        ambient.wallpaperPaused = false
+    }
+
+    func stopWallpaper() {
+        wallpaper.stop()
+        menuBar?.remove(); menuBar = nil
+        wallpaperCommands = nil
+        ambient.wallpaperActive = false
+        ambient.wallpaperPaused = false
+        ambient.pausedReason = nil
+    }
+
+    /// Pause/resume the running wallpaper (host UI + menu-bar share this). A manual
+    /// pause clears any courtesy reason — it's a user action, not "on battery".
+    func toggleWallpaperPause() {
+        guard let cmd = wallpaperCommands else { return }
+        cmd.playPause()
+        ambient.wallpaperPaused = !cmd.isPlaying
+        ambient.pausedReason = nil
     }
 }
 
@@ -55,6 +140,7 @@ struct AppexSaverMinimalApp: App {
                 ContentView()
                     .environmentObject(appDelegate.license)
                     .environmentObject(appDelegate.playback)
+                    .environmentObject(appDelegate.ambient)
                     // Let the existing window claim external (surrealism://) events so a
                     // magic-link open reuses this window instead of spawning a new one.
                     .handlesExternalEvents(preferring: ["main"], allowing: ["*"])
