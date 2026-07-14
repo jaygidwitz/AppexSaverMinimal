@@ -26,6 +26,16 @@ extension ProcessInfo {
 /// different store instance than the one showing "Check your email".
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// SwiftUI's `@NSApplicationDelegateAdaptor` does not reliably expose this
+    /// instance via `NSApp.delegate as? AppDelegate` (it can read back as the bare
+    /// `NSApplicationDelegate` existential), so surfaces reach it through here.
+    static private(set) weak var shared: AppDelegate?
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
     let license = LicenseStore()
     /// Shared playback settings (shuffle / cross-fade / rotation), app-owned so
     /// every surface observes one source of truth.

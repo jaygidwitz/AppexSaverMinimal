@@ -13,20 +13,26 @@ import AVFoundation
 
 @MainActor
 final class WallpaperWindow: NSWindow {
-    /// One below the desktop-icon layer → renders behind the icons.
-    static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) - 1)
+    /// The desktop-picture level — renders behind the icons (the technique Plash
+    /// uses). `.desktopWindow` (-2147483623) sits below `.desktopIconWindow`.
+    static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)))
 
     private let content = WallpaperContentView()
+
+    // Non-activating: the wallpaper must never steal key/main focus.
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
 
     init(screen: NSScreen) {
         super.init(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
         level = Self.desktopLevel
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenNone]
         ignoresMouseEvents = true            // desktop clicks pass through
         isOpaque = true
         backgroundColor = .black
         hasShadow = false
         isReleasedWhenClosed = false
+        isRestorable = false
         content.frame = NSRect(origin: .zero, size: screen.frame.size)
         contentView = content
         setFrame(screen.frame, display: false)

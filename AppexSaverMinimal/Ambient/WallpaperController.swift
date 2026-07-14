@@ -69,7 +69,13 @@ final class WallpaperController {
                 teardown(surfaces[i]); surfaces.remove(at: i)
             }
         }
-        for s in surfaces { if let scr = screensByID[s.displayID] { s.window.reposition(to: scr) } }
+        // Reposition only when a screen's frame actually changed — the screen-params
+        // notification fires often, and a redundant setFrame is wasteful churn.
+        for s in surfaces {
+            if let scr = screensByID[s.displayID], s.window.frame != scr.frame {
+                s.window.reposition(to: scr)
+            }
+        }
         for id in add { if let scr = screensByID[id] { surfaces.append(makeSurface(displayID: id, screen: scr)) } }
     }
 

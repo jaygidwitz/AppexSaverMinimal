@@ -299,7 +299,7 @@ struct ContentView: View {
                 if !library.videos.isEmpty {
                     HStack(spacing: 10) {
                         Button {
-                            (NSApp.delegate as? AppDelegate)?.startWallpaper()
+                            AppDelegate.shared?.startWallpaper()
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "menubar.dock.rectangle")
