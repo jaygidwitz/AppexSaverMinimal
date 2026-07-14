@@ -83,6 +83,7 @@ final class WallpaperController {
         let active = RotationResolver.activeURLs(rotation: settings.rotation, library: library())
         let vpc = VideoPlayerController(videos: active, shuffle: settings.shuffle)
         vpc.setFadeDuration(settings.crossFadeSeconds)
+        vpc.setRate(Float(settings.playbackRate))
         vpc.setVideoGravity(.resizeAspectFill)   // fill the screen (no desktop bars)
         let win = WallpaperWindow(screen: screen)
         win.mount(vpc)

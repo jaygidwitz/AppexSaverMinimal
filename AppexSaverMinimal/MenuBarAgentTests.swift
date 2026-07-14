@@ -21,9 +21,7 @@ final class MenuBarAgentTests: XCTestCase {
     }
 
     func testAgent_installIsIdempotentAndRemovable() {
-        let settings = PlaybackSettings(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
-        let cmd = PlaybackCommands(settings: settings, controllers: { [] })
-        let agent = MenuBarAgent(commands: cmd, onStopWallpaper: {}, onOpen: {}, onQuit: {})
+        let agent = MenuBarAgent(onTogglePause: {}, onNext: {}, onStopWallpaper: {}, onOpen: {}, onQuit: {})
 
         XCTAssertFalse(agent.isInstalled)
         agent.install()

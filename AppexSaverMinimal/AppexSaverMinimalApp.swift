@@ -11,6 +11,14 @@
 
 import SwiftUI
 
+/// Observable ambient-surface state for the host UI (wallpaper running/paused),
+/// injected via the environment so ContentView can show live controls.
+@MainActor
+final class AmbientState: ObservableObject {
+    @Published fileprivate(set) var wallpaperActive = false
+    @Published fileprivate(set) var wallpaperPaused = false
+}
+
 extension ProcessInfo {
     /// True when the process was launched by XCTest (the app is acting as the
     /// unit-test host). XCTest sets `XCTestConfigurationFilePath` in the
@@ -40,6 +48,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Shared playback settings (shuffle / cross-fade / rotation), app-owned so
     /// every surface observes one source of truth.
     let playback = PlaybackSettings()
+    /// Live ambient state for the host UI (wallpaper running/paused).
+    let ambient = AmbientState()
 
     // Desktop wallpaper surface (U3/U4) is owned here, at app level, so it outlives
     // the main window. The menu-bar agent + its commands live and die with it.
@@ -77,18 +87,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         cmd.onStop = { [weak self] in self?.stopWallpaper() }
         wallpaperCommands = cmd
         let agent = MenuBarAgent(
-            commands: cmd,
+            onTogglePause: { [weak self] in self?.toggleWallpaperPause() },
+            onNext: { cmd.next() },
             onStopWallpaper: { [weak self] in self?.stopWallpaper() },
             onOpen: { NSApp.activate(ignoringOtherApps: true) },
             onQuit: { NSApp.terminate(nil) })
         agent.install()
         menuBar = agent
+        ambient.wallpaperActive = true
+        ambient.wallpaperPaused = false
     }
 
     func stopWallpaper() {
         wallpaper.stop()
         menuBar?.remove(); menuBar = nil
         wallpaperCommands = nil
+        ambient.wallpaperActive = false
+        ambient.wallpaperPaused = false
+    }
+
+    /// Pause/resume the running wallpaper (host UI + menu-bar share this).
+    func toggleWallpaperPause() {
+        guard let cmd = wallpaperCommands else { return }
+        cmd.playPause()
+        ambient.wallpaperPaused = !cmd.isPlaying
     }
 }
 
@@ -109,6 +131,7 @@ struct AppexSaverMinimalApp: App {
                 ContentView()
                     .environmentObject(appDelegate.license)
                     .environmentObject(appDelegate.playback)
+                    .environmentObject(appDelegate.ambient)
                     // Let the existing window claim external (surrealism://) events so a
                     // magic-link open reuses this window instead of spawning a new one.
                     .handlesExternalEvents(preferring: ["main"], allowing: ["*"])

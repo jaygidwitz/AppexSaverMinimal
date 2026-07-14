@@ -207,6 +207,7 @@ struct ContentView: View {
     // update the same store this window's sign-in UI is bound to.
     @EnvironmentObject private var license: LicenseStore
     @EnvironmentObject private var playback: PlaybackSettings
+    @EnvironmentObject private var ambient: AmbientState
     @StateObject private var catalog = CatalogModel()
     @StateObject private var downloader = LoopDownloader()
     @State private var previewToken = 0
@@ -298,16 +299,36 @@ struct ContentView: View {
             .overlay(alignment: .bottomTrailing) {
                 if !library.videos.isEmpty {
                     HStack(spacing: 10) {
-                        Button {
-                            AppDelegate.shared?.startWallpaper()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "menubar.dock.rectangle")
-                                Text("Set as Wallpaper")
+                        if ambient.wallpaperActive {
+                            Button { AppDelegate.shared?.toggleWallpaperPause() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: ambient.wallpaperPaused ? "play.fill" : "pause.fill")
+                                    Text(ambient.wallpaperPaused ? "Resume Wallpaper" : "Pause Wallpaper")
+                                }
                             }
+                            .buttonStyle(GhostButtonStyle())
+                            .help("Pause or resume the desktop wallpaper")
+
+                            Button { AppDelegate.shared?.stopWallpaper() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "stop.fill")
+                                    Text("Stop")
+                                }
+                            }
+                            .buttonStyle(GhostButtonStyle())
+                            .help("Stop the wallpaper and restore your desktop")
+                        } else {
+                            Button {
+                                AppDelegate.shared?.startWallpaper()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "menubar.dock.rectangle")
+                                    Text("Set as Wallpaper")
+                                }
+                            }
+                            .buttonStyle(GhostButtonStyle())
+                            .help("Play the rotation behind your desktop icons (control it from the menu bar too)")
                         }
-                        .buttonStyle(GhostButtonStyle())
-                        .help("Play the rotation behind your desktop icons (control it from the menu bar)")
 
                         Button {
                             let active = RotationResolver.activeURLs(

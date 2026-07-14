@@ -49,6 +49,21 @@ struct PlaybackControlsView: View {
                     .tint(accent)
             }
 
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Speed").font(.system(size: 14, weight: .medium))
+                    Spacer()
+                    Text(speedLabel)
+                        .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                }
+                Slider(value: Binding(get: { settings.playbackRate },
+                                      set: { settings.setPlaybackRate($0) }),
+                       in: PlaybackSettings.rateRange, step: 0.05)
+                    .tint(accent)
+                Text("Slow the motion down — applies to the desktop wallpaper, theater, and preview.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+
             if !videos.isEmpty {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 1) {
@@ -69,6 +84,10 @@ struct PlaybackControlsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.05)))
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private var speedLabel: String {
+        settings.playbackRate >= 0.999 ? "Normal" : String(format: "%.2f×", settings.playbackRate)
     }
 
     private var rotationSummary: String {

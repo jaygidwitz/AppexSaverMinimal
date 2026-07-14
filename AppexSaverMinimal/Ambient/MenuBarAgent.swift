@@ -22,16 +22,19 @@ enum AmbientLifecycle {
 @MainActor
 final class MenuBarAgent: NSObject {
     private var statusItem: NSStatusItem?
-    private let commands: PlaybackCommands
+    private let onTogglePause: () -> Void
+    private let onNext: () -> Void
     private let onStopWallpaper: () -> Void
     private let onOpen: () -> Void
     private let onQuit: () -> Void
 
-    init(commands: PlaybackCommands,
+    init(onTogglePause: @escaping () -> Void,
+         onNext: @escaping () -> Void,
          onStopWallpaper: @escaping () -> Void,
          onOpen: @escaping () -> Void,
          onQuit: @escaping () -> Void) {
-        self.commands = commands
+        self.onTogglePause = onTogglePause
+        self.onNext = onNext
         self.onStopWallpaper = onStopWallpaper
         self.onOpen = onOpen
         self.onQuit = onQuit
@@ -72,8 +75,8 @@ final class MenuBarAgent: NSObject {
         return menu
     }
 
-    @objc private func playPause() { commands.playPause() }
-    @objc private func next() { commands.next() }
+    @objc private func playPause() { onTogglePause() }
+    @objc private func next() { onNext() }
     @objc private func stopWallpaper() { onStopWallpaper() }
     @objc private func open() { onOpen() }
     @objc private func quit() { onQuit() }

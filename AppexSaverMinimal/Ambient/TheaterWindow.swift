@@ -58,6 +58,7 @@ enum TheaterWindow {
 
         let vpc = VideoPlayerController(videos: urls, shuffle: settings.shuffle)
         vpc.setFadeDuration(settings.crossFadeSeconds)
+        vpc.setRate(Float(settings.playbackRate))
         vpc.setVideoGravity(.resizeAspect)
         vpc.attach(to: box.layer!)
         vpc.updateBounds(box.bounds)

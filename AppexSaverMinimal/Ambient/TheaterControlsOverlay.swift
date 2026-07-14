@@ -19,6 +19,10 @@ struct TheaterControlsOverlay: View {
     @State private var isPlaying = true
     private let accent = Color(red: 0.55, green: 0.4, blue: 0.95)
 
+    private var speedText: String {
+        settings.playbackRate >= 0.999 ? "1×" : String(format: "%.2f×", settings.playbackRate)
+    }
+
     var body: some View {
         HStack(spacing: 18) {
             control(isPlaying ? "pause.fill" : "play.fill", "Play or pause (Space)") {
@@ -33,6 +37,18 @@ struct TheaterControlsOverlay: View {
                 .font(.system(size: 13, weight: .medium, design: .monospaced)).foregroundStyle(.white)
                 .frame(width: 38)
             control("plus", "Longer cross-fade (])") { commands.crossFadeStep(+1) }
+
+            Divider().frame(height: 22).overlay(Color.white.opacity(0.15))
+
+            control("tortoise.fill", "Slower") {
+                settings.setPlaybackRate(settings.playbackRate - 0.25)
+            }
+            Text(speedText)
+                .font(.system(size: 13, weight: .medium, design: .monospaced)).foregroundStyle(.white)
+                .frame(width: 42)
+            control("hare.fill", "Faster (up to normal speed)") {
+                settings.setPlaybackRate(settings.playbackRate + 0.25)
+            }
 
             Divider().frame(height: 22).overlay(Color.white.opacity(0.22))
 

@@ -45,6 +45,8 @@ final class VideoPlayerController {
     private var fadeDuration: TimeInterval = 1.4
     private var videoGravity: AVLayerVideoGravity = .resizeAspectFill
     private var paused = false
+    /// Playback speed (1 = normal; < 1 = slow motion). Applied at every play site.
+    private var rate: Float = 1
 
     private var slots: [Slot] = []
     private var active = 0
@@ -79,6 +81,18 @@ final class VideoPlayerController {
     /// an in-flight transition keeps its captured duration.
     func setFadeDuration(_ seconds: TimeInterval) { fadeDuration = seconds }
 
+    /// Set playback speed live (1 = normal, < 1 = slow). Applies to whatever is
+    /// currently playing without interrupting it.
+    func setRate(_ newRate: Float) {
+        rate = newRate
+        guard started, !paused else { return }
+        slots.forEach { if $0.player.rate != 0 { $0.player.rate = newRate } }
+    }
+
+    /// Begin/continue playback at the current `rate` (replaces bare `play()`, which
+    /// would force rate 1).
+    private func playAtRate(_ player: AVQueuePlayer) { player.rate = rate }
+
     /// Change how video fills the layer (e.g. `.resizeAspect` letterbox for the
     /// in-app surface vs `.resizeAspectFill` crop for the fullscreen saver).
     func setVideoGravity(_ gravity: AVLayerVideoGravity) {
@@ -94,7 +108,7 @@ final class VideoPlayerController {
     func resume() {
         paused = false
         guard started else { return }
-        slots.forEach { if $0.player.currentItem != nil { $0.player.play() } }
+        slots.forEach { if $0.player.currentItem != nil { playAtRate($0.player) } }
     }
 
     /// Manually advance to the next clip (cross-fade). No-op if single-clip,
@@ -126,7 +140,7 @@ final class VideoPlayerController {
         } else {
             load(playlist[index], into: slot)
         }
-        if !paused { slot.player.play() }
+        if !paused { playAtRate(slot.player) }
         fade(slot.layer, to: 1)
         if playlist.count > 1 { watchForEnd(of: slot) }
     }
@@ -174,13 +188,13 @@ final class VideoPlayerController {
         if playlist.count == 1 {
             let slot = slots[active]
             looper = AVPlayerLooper(player: slot.player, templateItem: AVPlayerItem(url: playlist[0]))
-            slot.player.play()
+            playAtRate(slot.player)
             fade(slot.layer, to: 1)
         } else {
             index = 0
             let slot = slots[active]
             load(playlist[index], into: slot)
-            slot.player.play()
+            playAtRate(slot.player)
             fade(slot.layer, to: 1)
             watchForEnd(of: slot)
         }
@@ -246,7 +260,7 @@ final class VideoPlayerController {
         load(playlist[nextIndex], into: next)
         next.layer.opacity = 0
         next.player.seek(to: .zero)
-        next.player.play()
+        playAtRate(next.player)
 
         // Cross-fade
         fade(next.layer, to: 1, duration: fadeSecs)
@@ -305,9 +319,9 @@ final class VideoPlayerController {
                     self.load(self.playlist[self.index], into: slot)
                     self.watchForEnd(of: slot)
                 }
-                slot.player.play()
+                playAtRate(slot.player)
             } else {
-                slot.player.pause(); slot.player.play()   // nudge the layer awake
+                slot.player.pause(); playAtRate(slot.player)   // nudge the layer awake
             }
         }
     }

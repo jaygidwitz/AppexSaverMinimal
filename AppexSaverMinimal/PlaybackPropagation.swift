@@ -15,6 +15,7 @@ import Combine
 protocol PlaybackEngine: AnyObject {
     func setFadeDuration(_ seconds: TimeInterval)
     func setRotation(_ urls: [URL], shuffle: Bool)
+    func setRate(_ rate: Float)
 }
 
 extension VideoPlayerController: PlaybackEngine {}
@@ -30,6 +31,12 @@ final class PlaybackPropagator {
         settings.$crossFadeSeconds
             .dropFirst()
             .sink { engine.setFadeDuration($0) }
+            .store(in: &bag)
+
+        // Speed applies live to whatever is currently playing (no restart).
+        settings.$playbackRate
+            .dropFirst()
+            .sink { engine.setRate(Float($0)) }
             .store(in: &bag)
 
         // Rotation + shuffle rebuild the playlist — debounced to one rebuild per
