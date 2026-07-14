@@ -45,7 +45,6 @@ final class PlaybackShortcuts: NSObject, NSMenuItemValidation {
         switch event.keyCode {
         case Key.space:                    commands.playPause()
         case Key.rightArrow, Key.n:        commands.next()
-        case Key.s:                        commands.toggleShuffle()
         case Key.leftBracket:              commands.crossFadeStep(-1)
         case Key.rightBracket:             commands.crossFadeStep(+1)
         case Key.f:                        commands.togglePresentation()
@@ -66,7 +65,6 @@ final class PlaybackShortcuts: NSObject, NSMenuItemValidation {
         add("Play / Pause", " ", #selector(playPauseAction))
         add("Next Loop", "n", #selector(nextAction))
         menu.addItem(.separator())
-        add("Shuffle", "s", #selector(shuffleAction))
         add("Cross-fade Longer", "]", #selector(crossFadeUpAction))
         add("Cross-fade Shorter", "[", #selector(crossFadeDownAction))
         menu.addItem(.separator())

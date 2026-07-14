@@ -47,7 +47,11 @@ enum TheaterWindow {
         close(animated: false)
         self.settings = settings
 
-        let box = NSView()
+        // Start at the main screen's size so the video layers have real bounds
+        // before the window sizes the view; `layout()` keeps them in sync on
+        // windowed resize (else the AVPlayerLayers stay zero-sized → black).
+        let startFrame = (NSScreen.main ?? NSScreen.screens.first)?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let box = TheaterContentView(frame: startFrame)
         box.wantsLayer = true
         box.layer?.backgroundColor = NSColor.black.cgColor
         container = box
@@ -56,6 +60,8 @@ enum TheaterWindow {
         vpc.setFadeDuration(settings.crossFadeSeconds)
         vpc.setVideoGravity(.resizeAspect)
         vpc.attach(to: box.layer!)
+        vpc.updateBounds(box.bounds)
+        box.controller = vpc
         controller = vpc
         propagator = PlaybackPropagator(settings: settings, engine: vpc, library: library)
 
@@ -182,6 +188,17 @@ enum TheaterWindow {
     }
 }
 
+/// Container that keeps the video layers filling its bounds across fullscreen ⇄
+/// windowed resizes (the AVPlayerLayers are manually-added sublayers, so they need
+/// their bounds pushed on every layout — otherwise they render black).
+private final class TheaterContentView: NSView {
+    weak var controller: VideoPlayerController?
+    override func layout() {
+        super.layout()
+        controller?.updateBounds(bounds)
+    }
+}
+
 /// Key/mouse-reporting window used for both fullscreen (borderless) and windowed
 /// Theater presentations. Esc + transport keys route through `onKey`.
 private final class TheaterKeyWindow: NSWindow {
@@ -199,7 +216,7 @@ private final class TheaterKeyWindow: NSWindow {
 private struct TheaterHintView: View {
     var body: some View {
         VStack(spacing: 4) {
-            Text("Space play/pause · → next · S shuffle · [ ] cross-fade · F windowed · Esc exit")
+            Text("Space play/pause · → next · [ ] cross-fade · F windowed · Esc exit")
                 .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.9))
         }
         .padding(.horizontal, 16).padding(.vertical, 9)

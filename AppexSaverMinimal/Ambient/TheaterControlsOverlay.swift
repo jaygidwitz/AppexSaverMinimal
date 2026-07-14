@@ -28,29 +28,24 @@ struct TheaterControlsOverlay: View {
 
             Divider().frame(height: 22).overlay(Color.white.opacity(0.15))
 
-            Toggle("", isOn: Binding(get: { settings.shuffle },
-                                     set: { _ in commands.toggleShuffle() }))
-                .toggleStyle(.switch).tint(accent).labelsHidden()
-                .help("Shuffle (S)")
-            Label("Shuffle", systemImage: "shuffle").labelStyle(.iconOnly)
-                .foregroundStyle(settings.shuffle ? accent : .white.opacity(0.6))
-
-            Divider().frame(height: 22).overlay(Color.white.opacity(0.15))
-
             control("minus", "Shorter cross-fade ([)") { commands.crossFadeStep(-1) }
             Text(String(format: "%.1fs", settings.crossFadeSeconds))
-                .font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
-                .frame(width: 34)
+                .font(.system(size: 13, weight: .medium, design: .monospaced)).foregroundStyle(.white)
+                .frame(width: 38)
             control("plus", "Longer cross-fade (])") { commands.crossFadeStep(+1) }
 
-            Divider().frame(height: 22).overlay(Color.white.opacity(0.15))
+            Divider().frame(height: 22).overlay(Color.white.opacity(0.22))
 
             control("rectangle.inset.filled", "Fullscreen / windowed (F)") { commands.togglePresentation() }
         }
-        .padding(.horizontal, 20).padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1))
-        .shadow(color: .black.opacity(0.4), radius: 16, y: 4)
+        .padding(.horizontal, 22).padding(.vertical, 13)
+        // Dark frosted pill so white glyphs stay readable over bright video.
+        .background(
+            Capsule().fill(.black.opacity(0.58))
+                .background(.ultraThinMaterial, in: Capsule())
+        )
+        .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+        .shadow(color: .black.opacity(0.55), radius: 18, y: 5)
         .opacity(visible ? 1 : 0)
         .animation(.easeInOut(duration: 0.22), value: visible)
         .onAppear { isPlaying = commands.isPlaying }
@@ -58,8 +53,9 @@ struct TheaterControlsOverlay: View {
 
     @ViewBuilder private func control(_ symbol: String, _ help: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white).frame(width: 30, height: 26)
+            Image(systemName: symbol).font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white).shadow(color: .black.opacity(0.5), radius: 2)
+                .frame(width: 30, height: 26)
         }
         .buttonStyle(.plain).help(help)
     }
