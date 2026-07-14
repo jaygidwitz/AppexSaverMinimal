@@ -303,11 +303,15 @@ struct ContentView: View {
                             Button { AppDelegate.shared?.toggleWallpaperPause() } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: ambient.wallpaperPaused ? "play.fill" : "pause.fill")
-                                    Text(ambient.wallpaperPaused ? "Resume Wallpaper" : "Pause Wallpaper")
+                                    Text(ambient.wallpaperPaused
+                                         ? (ambient.pausedReason.map { "Paused · \($0)" } ?? "Resume Wallpaper")
+                                         : "Pause Wallpaper")
                                 }
                             }
                             .buttonStyle(GhostButtonStyle())
-                            .help("Pause or resume the desktop wallpaper")
+                            .help(ambient.pausedReason != nil
+                                  ? "Auto-paused (\(ambient.pausedReason!)). Turn off battery courtesy in Playback to keep it running."
+                                  : "Pause or resume the desktop wallpaper")
 
                             Button { AppDelegate.shared?.stopWallpaper() } label: {
                                 HStack(spacing: 8) {

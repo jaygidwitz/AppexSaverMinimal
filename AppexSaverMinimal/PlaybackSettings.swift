@@ -25,6 +25,8 @@ final class PlaybackSettings: ObservableObject {
     @Published private(set) var rotation: Set<String>
     /// Playback speed: 1 = normal, below 1 = slow motion. Shared across surfaces.
     @Published private(set) var playbackRate: Double
+    /// Battery/thermal courtesy for wallpaper — pause when unplugged/hot (R14).
+    @Published private(set) var courtesyEnabled: Bool
 
     /// Accepted cross-fade range; the effective fade is additionally clamped
     /// against the current clip's length inside the engine (see VideoPlayerController).
@@ -41,6 +43,7 @@ final class PlaybackSettings: ObservableObject {
     private let kCrossFade = "app.surrealism.playback.crossFade"
     private let kRotation = "app.surrealism.playback.rotation"
     private let kRate = "app.surrealism.playback.rate"
+    private let kCourtesy = "app.surrealism.playback.courtesy"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -50,6 +53,12 @@ final class PlaybackSettings: ObservableObject {
         self.rotation = Set(defaults.stringArray(forKey: kRotation) ?? [])
         let storedRate = defaults.object(forKey: kRate) as? Double ?? Self.defaultRate
         self.playbackRate = Self.clampRate(storedRate)
+        self.courtesyEnabled = defaults.object(forKey: kCourtesy) as? Bool ?? true
+    }
+
+    func setCourtesyEnabled(_ on: Bool) {
+        courtesyEnabled = on
+        defaults.set(on, forKey: kCourtesy)
     }
 
     func setShuffle(_ on: Bool) {

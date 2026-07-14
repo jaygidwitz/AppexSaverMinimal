@@ -17,6 +17,8 @@ import SwiftUI
 final class AmbientState: ObservableObject {
     @Published fileprivate(set) var wallpaperActive = false
     @Published fileprivate(set) var wallpaperPaused = false
+    /// Non-nil when the pause was courtesy-driven (e.g. "on battery") vs a user pause.
+    @Published fileprivate(set) var pausedReason: String?
 }
 
 extension ProcessInfo {
@@ -81,6 +83,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func startWallpaper() {
         guard !wallpaper.isActive, !VideoCache.videos().isEmpty else { return }
+        wallpaper.onCourtesyChange = { [weak self] pause, reason in
+            self?.ambient.wallpaperPaused = pause
+            self?.ambient.pausedReason = reason
+        }
         wallpaper.start()
         let cmd = PlaybackCommands(settings: playback,
                                    controllers: { [weak self] in self?.wallpaper.controllers ?? [] })
@@ -104,13 +110,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wallpaperCommands = nil
         ambient.wallpaperActive = false
         ambient.wallpaperPaused = false
+        ambient.pausedReason = nil
     }
 
-    /// Pause/resume the running wallpaper (host UI + menu-bar share this).
+    /// Pause/resume the running wallpaper (host UI + menu-bar share this). A manual
+    /// pause clears any courtesy reason — it's a user action, not "on battery".
     func toggleWallpaperPause() {
         guard let cmd = wallpaperCommands else { return }
         cmd.playPause()
         ambient.wallpaperPaused = !cmd.isPlaying
+        ambient.pausedReason = nil
     }
 }
 

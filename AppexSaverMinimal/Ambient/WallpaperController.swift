@@ -10,6 +10,7 @@
 //
 
 import AppKit
+import Combine
 
 @MainActor
 final class WallpaperController {
@@ -25,6 +26,12 @@ final class WallpaperController {
     private let settings: PlaybackSettings
     private let library: () -> [URL]
     private var screenObserver: NSObjectProtocol?
+    private var courtesy: CourtesyMonitor?
+    private var courtesySub: AnyCancellable?
+
+    /// Reports courtesy-driven pause/resume so the UI can show a distinct label
+    /// ("Paused — on battery") separate from a user pause.
+    var onCourtesyChange: ((Bool, String?) -> Void)?
 
     init(settings: PlaybackSettings, library: @escaping () -> [URL]) {
         self.settings = settings
@@ -42,12 +49,26 @@ final class WallpaperController {
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.reconcile() }
         }
+        let mon = CourtesyMonitor(
+            isEnabled: { [weak self] in self?.settings.courtesyEnabled ?? true },
+            onChange: { [weak self] pause, reason in self?.applyCourtesy(pause, reason) })
+        mon.start()
+        courtesy = mon
+        // Re-evaluate immediately when the courtesy toggle flips.
+        courtesySub = settings.$courtesyEnabled.dropFirst().sink { [weak self] _ in self?.courtesy?.evaluate() }
     }
 
     func stop() {
         if let o = screenObserver { NotificationCenter.default.removeObserver(o); screenObserver = nil }
+        courtesy?.stop(); courtesy = nil
+        courtesySub = nil
         surfaces.forEach(teardown)
         surfaces = []
+    }
+
+    private func applyCourtesy(_ pause: Bool, _ reason: String?) {
+        surfaces.forEach { pause ? $0.controller.pause() : $0.controller.resume() }
+        onCourtesyChange?(pause, reason)
     }
 
     /// Pure set-difference for the display set — unit-tested without real screens.

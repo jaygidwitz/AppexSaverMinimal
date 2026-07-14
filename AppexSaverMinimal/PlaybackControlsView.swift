@@ -64,6 +64,17 @@ struct PlaybackControlsView: View {
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
 
+            Toggle(isOn: Binding(get: { settings.courtesyEnabled },
+                                 set: { settings.setCourtesyEnabled($0) })) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Pause wallpaper on battery").font(.system(size: 14, weight: .medium))
+                    Text("Saves power — also pauses when the Mac is thermally stressed")
+                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .tint(accent)
+
             if !videos.isEmpty {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 1) {
