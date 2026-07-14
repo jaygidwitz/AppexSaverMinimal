@@ -297,21 +297,34 @@ struct ContentView: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 if !library.videos.isEmpty {
-                    Button {
-                        let active = RotationResolver.activeURLs(
-                            rotation: playback.rotation,
-                            library: library.videos.map(\.url))
-                        TheaterWindow.present(urls: active, settings: playback,
-                                              library: { library.videos.map(\.url) })
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "play.fill")
-                            Text("Watch in Theater")
+                    HStack(spacing: 10) {
+                        Button {
+                            (NSApp.delegate as? AppDelegate)?.startWallpaper()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "menubar.dock.rectangle")
+                                Text("Set as Wallpaper")
+                            }
                         }
+                        .buttonStyle(GhostButtonStyle())
+                        .help("Play the rotation behind your desktop icons (control it from the menu bar)")
+
+                        Button {
+                            let active = RotationResolver.activeURLs(
+                                rotation: playback.rotation,
+                                library: library.videos.map(\.url))
+                            TheaterWindow.present(urls: active, settings: playback,
+                                                  library: { library.videos.map(\.url) })
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "play.fill")
+                                Text("Watch in Theater")
+                            }
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        .help("Watch the rotation with transport controls (Space, →, [ ], F, Esc)")
                     }
-                    .buttonStyle(PrimaryButtonStyle())
                     .padding(28)
-                    .help("Watch the rotation with transport controls (Space, →, S, [ ], F, Esc)")
                 }
             }
             .clipped()

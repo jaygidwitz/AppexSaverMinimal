@@ -31,10 +31,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// every surface observes one source of truth.
     let playback = PlaybackSettings()
 
+    // Desktop wallpaper surface (U3/U4) is owned here, at app level, so it outlives
+    // the main window. The menu-bar agent + its commands live and die with it.
+    private lazy var wallpaper = WallpaperController(settings: playback,
+                                                     library: { VideoCache.videos() })
+    private var wallpaperCommands: PlaybackCommands?
+    private var menuBar: MenuBarAgent?
+
+    var isWallpaperActive: Bool { wallpaper.isActive }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             Task { await license.handleAuthCallback(url) }
         }
+    }
+
+    /// Keep the process (and the running wallpaper) alive when the main window is
+    /// closed — a WindowGroup app otherwise quits on last-window-close (KTD4).
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        AmbientLifecycle.shouldTerminateAfterLastWindowClosed(wallpaperActive: wallpaper.isActive)
+    }
+
+    /// Dock-icon click / reactivation reopens the main WindowGroup window.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        true
+    }
+
+    // MARK: Wallpaper control (called from the host UI + menu-bar agent)
+
+    func startWallpaper() {
+        guard !wallpaper.isActive, !VideoCache.videos().isEmpty else { return }
+        wallpaper.start()
+        let cmd = PlaybackCommands(settings: playback,
+                                   controllers: { [weak self] in self?.wallpaper.controllers ?? [] })
+        cmd.onStop = { [weak self] in self?.stopWallpaper() }
+        wallpaperCommands = cmd
+        let agent = MenuBarAgent(
+            commands: cmd,
+            onStopWallpaper: { [weak self] in self?.stopWallpaper() },
+            onOpen: { NSApp.activate(ignoringOtherApps: true) },
+            onQuit: { NSApp.terminate(nil) })
+        agent.install()
+        menuBar = agent
+    }
+
+    func stopWallpaper() {
+        wallpaper.stop()
+        menuBar?.remove(); menuBar = nil
+        wallpaperCommands = nil
     }
 }
 
