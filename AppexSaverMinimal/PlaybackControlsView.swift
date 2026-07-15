@@ -26,42 +26,48 @@ struct PlaybackControlsView: View {
                 Spacer()
             }
 
-            Toggle(isOn: Binding(get: { settings.shuffle }, set: { settings.setShuffle($0) })) {
+            HStack(spacing: 12) {
+                Toggle(isOn: Binding(get: { settings.shuffle }, set: { settings.setShuffle($0) })) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Shuffle").font(.system(size: 14, weight: .medium))
+                        Text(settings.shuffle ? "Random order" : "In order")
+                            .font(.system(size: 12)).foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .tint(accent)
+
+                Spacer()
+
+                // Cross-fade as a compact value + stepper (steps match the [ ] keys).
+                Text("Cross-fade").font(.system(size: 14, weight: .medium))
+                Text(String(format: "%.1fs", settings.crossFadeSeconds))
+                    .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                    .frame(minWidth: 34, alignment: .trailing)
+                Stepper("Cross-fade",
+                        value: Binding(get: { settings.crossFadeSeconds },
+                                       set: { settings.setCrossFadeSeconds($0) }),
+                        in: PlaybackSettings.fadeRange,
+                        step: PlaybackCommands.crossFadeStepSeconds)
+                    .labelsHidden()
+            }
+
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Shuffle").font(.system(size: 14, weight: .medium))
-                    Text(settings.shuffle ? "Random order" : "In order")
+                    Text("Speed").font(.system(size: 14, weight: .medium))
+                    Text("Slow the motion down — applies everywhere")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
-            }
-            .toggleStyle(.switch)
-            .tint(accent)
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Cross-fade").font(.system(size: 14, weight: .medium))
-                    Spacer()
-                    Text(String(format: "%.1fs", settings.crossFadeSeconds))
-                        .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
-                }
-                Slider(value: Binding(get: { settings.crossFadeSeconds },
-                                      set: { settings.setCrossFadeSeconds($0) }),
-                       in: PlaybackSettings.fadeRange)
-                    .tint(accent)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Speed").font(.system(size: 14, weight: .medium))
-                    Spacer()
-                    Text(speedLabel)
-                        .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
-                }
-                Slider(value: Binding(get: { settings.playbackRate },
-                                      set: { settings.setPlaybackRate($0) }),
-                       in: PlaybackSettings.rateRange, step: 0.05)
-                    .tint(accent)
-                Text("Slow the motion down — applies to the desktop wallpaper, theater, and preview.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                Spacer()
+                Text(speedLabel)
+                    .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                    .frame(minWidth: 52, alignment: .trailing)
+                Stepper("Speed",
+                        value: Binding(get: { settings.playbackRate },
+                                       set: { settings.setPlaybackRate($0) }),
+                        in: PlaybackSettings.rateRange,
+                        step: 0.05)
+                    .labelsHidden()
             }
 
             if !videos.isEmpty {
