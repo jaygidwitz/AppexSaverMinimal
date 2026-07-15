@@ -82,6 +82,30 @@ struct PrimaryButtonStyle: ButtonStyle {
     }
 }
 
+/// Frosted-glass capsule for actions floating over the hero video: real
+/// material blur, a top rim-light, and a soft drop shadow so it reads as a
+/// pane of glass rather than a flat tint. Use over imagery; GhostButtonStyle
+/// stays for buttons inside flat cards (blur has nothing to show there).
+struct GlassButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(.white.opacity(0.92))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 9)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(
+                Capsule().strokeBorder(
+                    LinearGradient(colors: [.white.opacity(0.45), .white.opacity(0.07)],
+                                   startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 /// Quiet glass capsule for secondary actions.
 struct GhostButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -316,7 +340,7 @@ struct ContentView: View {
                                          : "Pause Wallpaper")
                                 }
                             }
-                            .buttonStyle(GhostButtonStyle())
+                            .buttonStyle(GlassButtonStyle())
                             .help(ambient.pausedReason != nil
                                   ? "Auto-paused (\(ambient.pausedReason!)). Turn off battery courtesy in Playback to keep it running."
                                   : "Pause or resume the desktop wallpaper")
@@ -327,7 +351,7 @@ struct ContentView: View {
                                     Text("Stop")
                                 }
                             }
-                            .buttonStyle(GhostButtonStyle())
+                            .buttonStyle(GlassButtonStyle())
                             .help("Stop the wallpaper and restore your desktop")
                         } else {
                             Button {
@@ -338,7 +362,7 @@ struct ContentView: View {
                                     Text("Set as Wallpaper")
                                 }
                             }
-                            .buttonStyle(GhostButtonStyle())
+                            .buttonStyle(GlassButtonStyle())
                             .help("Play the rotation behind your desktop icons (control it from the menu bar too)")
                         }
 
