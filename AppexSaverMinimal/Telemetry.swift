@@ -23,7 +23,7 @@ final class Telemetry: ObservableObject {
     /// either can be rotated alone). Until then telemetry is a silent no-op.
     /// An MP secret in a shipped binary is expected and write-only.
     nonisolated static let placeholderSecret = "REPLACE_WITH_MP_API_SECRET"
-    nonisolated static let apiSecret = placeholderSecret
+    nonisolated static let apiSecret = "KODh36O_QE2l-jwEGEHTCg"
 
     /// Process-wide instance used by call sites; tests build their own.
     static let shared = Telemetry()
