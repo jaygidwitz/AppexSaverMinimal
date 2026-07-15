@@ -233,10 +233,9 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     hero
                     VStack(alignment: .leading, spacing: 28) {
-                        screensaverSection
-                        if !library.videos.isEmpty {
-                            PlaybackControlsView(settings: playback, videos: library.videos,
-                                                 isSelecting: $isSelectingRotation)
+                        PlaybackControlsView(settings: playback, videos: library.videos,
+                                             isSelecting: $isSelectingRotation) {
+                            screensaverRows
                         }
                         librarySection
                         LicenseView(store: license)
@@ -497,51 +496,50 @@ struct ContentView: View {
         }
     }
 
-    private var screensaverSection: some View {
+    /// Screensaver setup/status — rendered as the bottom section of the
+    /// Playback panel (its footer slot); logic stays here with pluginManager.
+    private var screensaverRows: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Screensaver").font(.title2).fontWeight(.semibold)
-            card {
-                VStack(alignment: .leading, spacing: 14) {
-                    if pluginManager.isActiveScreensaver {
-                        Label("Surrealism is your active screensaver", systemImage: "checkmark.seal.fill")
-                            .font(.callout.weight(.medium)).foregroundStyle(.green)
-                    } else {
-                        Text(pluginManager.isInstalled
-                             ? "Ready — make Surrealism your screensaver."
-                             : "Set Surrealism as your Mac screensaver.")
-                            .foregroundStyle(.white.opacity(0.65))
-                    }
+            Text("Screensaver").font(.system(size: 14, weight: .medium))
 
-                    if !pluginManager.isActiveScreensaver {
-                        VStack(alignment: .leading, spacing: 7) {
-                            instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” — it installs Surrealism and opens Screen Saver settings.")
-                            instructionStep(2, "In the list that opens, choose Surrealism.")
-                            instructionStep(3, "It runs when your Mac is idle. Reopen Screen Saver Settings anytime to preview or switch.")
-                        }
-                        .font(.callout)
-                        .padding(.top, 2)
-                    }
+            if pluginManager.isActiveScreensaver {
+                Label("Surrealism is your active screensaver", systemImage: "checkmark.seal.fill")
+                    .font(.callout.weight(.medium)).foregroundStyle(.green)
+            } else {
+                Text(pluginManager.isInstalled
+                     ? "Ready — make Surrealism your screensaver."
+                     : "Set Surrealism as your Mac screensaver.")
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
+            }
 
-                    if let error = pluginManager.lastError ?? pluginManager.screensaverError {
-                        Text(error).font(.caption).foregroundStyle(.red)
-                    }
-
-                    HStack(spacing: 10) {
-                        if !pluginManager.isActiveScreensaver {
-                            Button(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver") {
-                                setUpScreensaver()
-                            }
-                            .buttonStyle(PrimaryButtonStyle())
-                            .disabled(pluginManager.isLoading || pluginManager.isCheckingScreensaver)
-                        }
-                        Button("Screen Saver Settings") { openScreenSaverSettings() }
-                            .buttonStyle(GhostButtonStyle())
-                        if pluginManager.isLoading || pluginManager.isCheckingScreensaver {
-                            ProgressView().scaleEffect(0.6)
-                        }
-                        Spacer()
-                    }
+            if !pluginManager.isActiveScreensaver {
+                VStack(alignment: .leading, spacing: 7) {
+                    instructionStep(1, "Click “\(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver")” — it installs Surrealism and opens Screen Saver settings.")
+                    instructionStep(2, "In the list that opens, choose Surrealism.")
+                    instructionStep(3, "It runs when your Mac is idle. Reopen Screen Saver Settings anytime to preview or switch.")
                 }
+                .font(.callout)
+                .padding(.top, 2)
+            }
+
+            if let error = pluginManager.lastError ?? pluginManager.screensaverError {
+                Text(error).font(.caption).foregroundStyle(.red)
+            }
+
+            HStack(spacing: 10) {
+                if !pluginManager.isActiveScreensaver {
+                    Button(pluginManager.isInstalled ? "Set as Screensaver" : "Set Up Screensaver") {
+                        setUpScreensaver()
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(pluginManager.isLoading || pluginManager.isCheckingScreensaver)
+                }
+                Button("Screen Saver Settings") { openScreenSaverSettings() }
+                    .buttonStyle(GhostButtonStyle()).controlSize(.small)
+                if pluginManager.isLoading || pluginManager.isCheckingScreensaver {
+                    ProgressView().scaleEffect(0.6)
+                }
+                Spacer()
             }
         }
     }
