@@ -109,6 +109,15 @@ deep link (`AuthCallbackRouter.swift` validates `state`; PKCE protects against
 URL-scheme squatting). Keys (`SURR-XXXX-…`) live in the Keychain with offline
 grace and a 3-device limit (`LicenseStore.swift`).
 
+## Telemetry
+
+`Telemetry.swift` (host-only) sends anonymous `app_*` events to the same GA4
+property as the website via the Measurement Protocol — persisted random UUID,
+`platform: "macos"` on every event, user toggle in the Playback panel. It's a
+silent no-op until a real MP API secret replaces `Telemetry.apiSecret`'s
+placeholder, and always a no-op in the unit-test host. Never send license
+keys, emails, or file paths.
+
 ## Dependencies (SPM)
 
 - **PaperSaver** (`github.com/AerialScreensaver/PaperSaver`) — sets the active

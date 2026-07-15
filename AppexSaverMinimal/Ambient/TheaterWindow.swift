@@ -46,6 +46,7 @@ enum TheaterWindow {
         guard !urls.isEmpty else { return }
         close(animated: false)
         self.settings = settings
+        Telemetry.shared.send("app_theater_opened")
 
         // Start at the main screen's size so the video layers have real bounds
         // before the window sizes the view; `layout()` keeps them in sync on

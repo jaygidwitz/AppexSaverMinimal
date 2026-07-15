@@ -61,6 +61,10 @@ final class LoopDownloader: ObservableObject {
         } catch {
             errors[loop.id] = message(for: error)
         }
+        if errors[loop.id] == nil {
+            Telemetry.shared.send("app_loop_downloaded",
+                                  params: ["loop_id": loop.id, "is_sample": loop.isSample])
+        }
     }
 
     func remove(_ loopId: String) {

@@ -68,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Not in the unit-test host: tests must not write to /Users/Shared.
         guard !ProcessInfo.processInfo.isRunningUnitTests else { return }
         bridgeWriter = SettingsBridgeWriter(settings: playback)
+        Telemetry.shared.send("app_open")
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -110,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar = agent
         ambient.wallpaperActive = true
         ambient.wallpaperPaused = false
+        Telemetry.shared.send("app_wallpaper_started")
     }
 
     func stopWallpaper() {

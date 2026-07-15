@@ -231,7 +231,10 @@ final class LicenseStore: ObservableObject {
         defaults.set(packs, forKey: kPacks)
         defaults.set(Date().timeIntervalSince1970, forKey: kLastValidated)
         entryError = nil
+        // Report only the locked→unlocked transition, not every revalidation.
+        let wasUnlocked = isUnlocked
         state = .unlocked(tier: tier, packs: packs)
+        if !wasUnlocked { Telemetry.shared.send("app_license_unlocked", params: ["tier": tier]) }
     }
 
     private func offlineGraceState() -> State {

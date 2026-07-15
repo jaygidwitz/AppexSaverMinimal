@@ -179,6 +179,7 @@ class PluginManager: ObservableObject {
         do {
             try await paperSaver.setScreensaverEverywhere(module: screensaverDisplayName)
             checkScreensaverStatus()
+            Telemetry.shared.send("app_set_screensaver")
         } catch {
             screensaverError = error.localizedDescription
             isCheckingScreensaver = false
