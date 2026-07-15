@@ -72,6 +72,7 @@ enum TheaterWindow {
         cmd.onStop = { close() }
         commands = cmd
         shortcuts = PlaybackShortcuts(commands: cmd)
+        AppDelegate.shared?.setTheaterActive(true)
 
         let overlay = NSHostingView(rootView: makeOverlay(visible: false))
         overlay.translatesAutoresizingMaskIntoConstraints = false
@@ -187,7 +188,12 @@ enum TheaterWindow {
         commands = nil; shortcuts = nil
         overlayHost = nil; container = nil; settings = nil
         window?.orderOut(nil); window = nil
+        AppDelegate.shared?.setTheaterActive(false)
     }
+
+    /// The live command set while the Theater is open — the main-menu Playback
+    /// group routes here first (falling back to the wallpaper's).
+    static var activeCommands: PlaybackCommands? { commands }
 }
 
 /// Container that keeps the video layers filling its bounds across fullscreen ⇄

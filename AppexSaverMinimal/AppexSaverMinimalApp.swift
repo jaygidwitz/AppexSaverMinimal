@@ -19,6 +19,8 @@ final class AmbientState: ObservableObject {
     @Published fileprivate(set) var wallpaperPaused = false
     /// Non-nil when the pause was courtesy-driven (e.g. "on battery") vs a user pause.
     @Published fileprivate(set) var pausedReason: String?
+    /// Theater open/closed — drives the main-menu Playback group's enablement.
+    @Published fileprivate(set) var theaterActive = false
 }
 
 extension ProcessInfo {
@@ -63,6 +65,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var bridgeWriter: SettingsBridgeWriter?
 
     var isWallpaperActive: Bool { wallpaper.isActive }
+
+    /// The command set the main-menu Playback group drives: the Theater's while
+    /// it's open (it's frontmost), else the running wallpaper's.
+    var activePlaybackCommands: PlaybackCommands? { TheaterWindow.activeCommands ?? wallpaperCommands }
+
+    func setTheaterActive(_ active: Bool) { ambient.theaterActive = active }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Not in the unit-test host: tests must not write to /Users/Shared.
@@ -166,6 +174,12 @@ struct AppexSaverMinimalApp: App {
                         NSWorkspace.shared.open(url)
                     }
                 }
+            }
+            // The U1 "Playback" main-menu group — self-documenting shortcuts,
+            // greyed out until a surface (Theater / wallpaper) is presenting.
+            CommandMenu("Playback") {
+                PlaybackMenuCommands(ambient: appDelegate.ambient,
+                                     commands: { AppDelegate.shared?.activePlaybackCommands })
             }
         }
 
