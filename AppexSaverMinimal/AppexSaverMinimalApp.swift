@@ -174,5 +174,12 @@ struct AppexSaverMinimalApp: App {
                 .ignoresSafeArea()
         }
         .defaultSize(width: 640, height: 480)
+
+        // App menu → Settings… (⌘,): power courtesy + telemetry opt-out.
+        Settings {
+            SettingsView()
+                .environmentObject(appDelegate.playback)
+        }
+        .windowResizability(.contentSize)
     }
 }

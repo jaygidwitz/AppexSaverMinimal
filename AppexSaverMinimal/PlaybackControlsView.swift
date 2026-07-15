@@ -15,7 +15,6 @@ struct PlaybackControlsView: View {
     /// "Choose Loops" mode, owned by ContentView (KTD2). The panel flips it; the
     /// library grid reads it to switch tile behavior.
     @Binding var isSelecting: Bool
-    @ObservedObject private var telemetry = Telemetry.shared
 
     private let accent = Color(red: 0.55, green: 0.4, blue: 0.95)
 
@@ -64,28 +63,6 @@ struct PlaybackControlsView: View {
                 Text("Slow the motion down — applies to the desktop wallpaper, theater, and preview.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
-
-            Toggle(isOn: Binding(get: { settings.courtesyEnabled },
-                                 set: { settings.setCourtesyEnabled($0) })) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Pause wallpaper on battery").font(.system(size: 14, weight: .medium))
-                    Text("Saves power — also pauses when the Mac is thermally stressed")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .tint(accent)
-
-            Toggle(isOn: Binding(get: { telemetry.enabled },
-                                 set: { telemetry.setEnabled($0) })) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Share anonymous usage data").font(.system(size: 14, weight: .medium))
-                    Text("Feature-usage counts only — never your loops, key, or email")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .tint(accent)
 
             if !videos.isEmpty {
                 HStack(spacing: 12) {

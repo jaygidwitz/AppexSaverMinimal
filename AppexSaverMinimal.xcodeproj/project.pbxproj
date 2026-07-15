@@ -41,6 +41,7 @@
 		5B41D6E00000000000000006 /* RotationResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FB7B95923A3A60126C85F5 /* RotationResolver.swift */; };
 		7E1E4E7A0000000000000001 /* Telemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1E4E7AF00000000000000F /* Telemetry.swift */; };
 		7E1E4E7A0000000000000002 /* TelemetryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1E4E7AF00000000000001F /* TelemetryTests.swift */; };
+		7E1E4E7A0000000000000003 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1E4E7AF00000000000002F /* SettingsView.swift */; };
 		352F6622C140AC4BE6C60983 /* PlaybackControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057DCB4F6D22AA6F65FE9CD1 /* PlaybackControlsView.swift */; };
 		4374789C8BA0665EDB92DF54 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 394243EDE0E358CA4BCB5F22 /* Cocoa.framework */; };
 		5EC031D25CB2A74F1F915E5F /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D757FDC426E58CBD6258CD3 /* CatalogView.swift */; };
@@ -154,6 +155,7 @@
 		5B41D6EF000000000000003F /* SettingsBridgeWriterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsBridgeWriterTests.swift; sourceTree = "<group>"; };
 		7E1E4E7AF00000000000000F /* Telemetry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Telemetry.swift; sourceTree = "<group>"; };
 		7E1E4E7AF00000000000001F /* TelemetryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TelemetryTests.swift; sourceTree = "<group>"; };
+		7E1E4E7AF00000000000002F /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		57A14D6ED59C53BF4616170E /* PlaybackSettingsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PlaybackSettingsTests.swift; sourceTree = "<group>"; };
 		5D0E324CA2BB585C28828ED2 /* LoopDownloader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LoopDownloader.swift; sourceTree = "<group>"; };
 		5F12559AB3D6BBEEFB644311 /* CommerceAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommerceAPI.swift; sourceTree = "<group>"; };
@@ -247,6 +249,7 @@
 				5B41D6EF000000000000003F /* SettingsBridgeWriterTests.swift */,
 				7E1E4E7AF00000000000000F /* Telemetry.swift */,
 				7E1E4E7AF00000000000001F /* TelemetryTests.swift */,
+				7E1E4E7AF00000000000002F /* SettingsView.swift */,
 				FD72AEBA8E0A3CA3F2DBDE3E /* Ambient */,
 				8FFF76FB22C1FFD5B51D375E /* PlaybackCommandsTests.swift */,
 				AD726D38D5ADF206AB1B17FD /* TheaterPresentationTests.swift */,
@@ -535,6 +538,7 @@
 				5B41D6E00000000000000001 /* SettingsBridge.swift in Sources */,
 				5B41D6E00000000000000003 /* SettingsBridgeWriter.swift in Sources */,
 				7E1E4E7A0000000000000001 /* Telemetry.swift in Sources */,
+				7E1E4E7A0000000000000003 /* SettingsView.swift in Sources */,
 				352F6622C140AC4BE6C60983 /* PlaybackControlsView.swift in Sources */,
 				8243B32F719CC81E32059D60 /* PlaybackPropagation.swift in Sources */,
 				CA27DB1F73C5375B33032EC1 /* PlaybackCommands.swift in Sources */,
