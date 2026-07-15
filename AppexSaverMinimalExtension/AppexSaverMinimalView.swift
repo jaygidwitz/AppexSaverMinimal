@@ -87,12 +87,20 @@ final class AppexSaverMinimalView: ScreenSaverView {
         if !cached.isEmpty {
             animator.stop()
             if video == nil {
-                let controller = VideoPlayerController(videos: cached)
+                // Apply the host's settings bridge (rotation/shuffle/fade/speed);
+                // no or corrupt file → all loops with the historic defaults.
+                let snapshot = SettingsBridge.read()
+                let urls = RotationResolver.activeURLs(rotation: Set(snapshot?.rotation ?? []),
+                                                       library: cached)
+                let controller = VideoPlayerController(videos: urls,
+                                                       shuffle: snapshot?.shuffle ?? true)
+                controller.setFadeDuration(snapshot?.crossFadeSeconds ?? SettingsBridge.defaultFade)
+                controller.setRate(Float(snapshot?.playbackRate ?? SettingsBridge.defaultRate))
                 controller.attach(to: layer)
                 controller.updateBounds(bounds)
                 video = controller
+                logger.info("Playing \(urls.count, privacy: .public) of \(cached.count, privacy: .public) cached video(s) (bridge: \(snapshot != nil, privacy: .public))")
             }
-            logger.info("Playing \(cached.count, privacy: .public) cached video(s)")
             video?.start()
         } else {
             video?.stop()

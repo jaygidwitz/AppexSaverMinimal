@@ -44,10 +44,12 @@ Brand and bundle identity are migrated; on-disk names are not:
 
 ## Critical: shared code lives via dual target membership
 
-Three files are compiled into BOTH the host and extension targets (two
+Five files are compiled into BOTH the host and extension targets (two
 `Sources` build phases in `project.pbxproj`):
 
 - `AppexSaverMinimal/VideoPlayerController.swift` — the playback engine
+- `AppexSaverMinimal/SettingsBridge.swift` — settings file the appex reads on launch
+- `AppexSaverMinimal/RotationResolver.swift` — pure rotation-selection resolver
 - `AppexSaverMinimal/RainbowAnimator.swift` — legacy fallback when the cache is empty
 - `AppexSaverMinimal/Helpers/Logger.swift`
 
@@ -85,6 +87,12 @@ surface: two `AVPlayerLayer`s cross-faded for rotation (the fade is gated on
 the incoming player having a ready frame — don't regress this; it fixed a
 flash/crash), `AVPlayerLooper` for gapless single-clip loop, playback-speed
 support. Clips come from `/Users/Shared/AppexSaverMinimal/videos`.
+
+Settings reach the screensaver via the **control-bridge**: the host serializes
+`PlaybackSettings` (debounced, via `SettingsBridgeWriter`) to the world-readable
+`/Users/Shared/AppexSaverMinimal/playback.json`; the appex reads it on its next
+launch (`SettingsBridge.read()` in `AppexSaverMinimalView`). No IPC — the appex
+is never steered live. Missing/corrupt file → historic defaults.
 
 **Cache permission gotcha**: the host app writes downloads with explicit 0o644
 perms (`LoopDownloader.swift`) because the sandboxed extension runs as a

@@ -59,8 +59,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                                      library: { VideoCache.videos() })
     private var wallpaperCommands: PlaybackCommands?
     private var menuBar: MenuBarAgent?
+    /// Serializes playback settings to /Users/Shared for the screensaver (R7 bridge).
+    private var bridgeWriter: SettingsBridgeWriter?
 
     var isWallpaperActive: Bool { wallpaper.isActive }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Not in the unit-test host: tests must not write to /Users/Shared.
+        guard !ProcessInfo.processInfo.isRunningUnitTests else { return }
+        bridgeWriter = SettingsBridgeWriter(settings: playback)
+    }
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {

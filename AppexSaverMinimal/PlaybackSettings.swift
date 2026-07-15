@@ -30,13 +30,14 @@ final class PlaybackSettings: ObservableObject {
 
     /// Accepted cross-fade range; the effective fade is additionally clamped
     /// against the current clip's length inside the engine (see VideoPlayerController).
-    static let fadeRange: ClosedRange<Double> = 0.2...5.0
+    /// Ranges live on SettingsBridge so the extension shares the same clamps.
+    static let fadeRange = SettingsBridge.fadeRange
     /// Default cross-fade — matches the value the screensaver has always used.
-    static let defaultFade: Double = 1.4
+    static let defaultFade = SettingsBridge.defaultFade
 
     /// Accepted speed range: quarter-speed slow motion up to normal.
-    static let rateRange: ClosedRange<Double> = 0.25...1.0
-    static let defaultRate: Double = 1.0
+    static let rateRange = SettingsBridge.rateRange
+    static let defaultRate = SettingsBridge.defaultRate
 
     private let defaults: UserDefaults
     private let kShuffle = "app.surrealism.playback.shuffle"
