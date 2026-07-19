@@ -37,6 +37,13 @@ struct CatalogView: View {
             await model.load()
             await downloader.firstRunSetupIfNeeded(catalogSamples: model.loops.filter { $0.isSample })
             onLibraryChanged()
+            // The denominator for app_upgrade_prompt_clicked: the catalog was
+            // seen with loops the viewer can't play. Reported once per load.
+            let locked = model.loops.filter { !$0.entitled && !$0.isSample }.count
+            if locked > 0 {
+                Telemetry.shared.send("app_upgrade_prompt_shown",
+                                      params: ["surface": "catalog", "locked_count": locked])
+            }
         }
     }
 
@@ -135,7 +142,15 @@ struct CatalogView: View {
             }
             .buttonStyle(PrimaryButtonStyle())
         } else {
-            Link("Unlock →", destination: storeURL).font(.caption).foregroundStyle(.secondary)
+            // The upgrade funnel's click event: which locked loop made someone
+            // reach for the store. Without this we can't tell a weak prompt
+            // from a weak value proposition when conversion is low.
+            Link("Unlock →", destination: storeURL)
+                .font(.caption).foregroundStyle(.secondary)
+                .simultaneousGesture(TapGesture().onEnded {
+                    Telemetry.shared.send("app_upgrade_prompt_clicked",
+                                          params: ["surface": "catalog_locked_loop", "loop_id": loop.id])
+                })
         }
         if let e = downloader.errors[loop.id] { Text(e).font(.caption2).foregroundStyle(.orange) }
     }

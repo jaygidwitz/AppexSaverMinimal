@@ -129,6 +129,9 @@ struct LicenseView: View {
         }
         .buttonStyle(.plain)
         .padding(.top, 2)
+        .simultaneousGesture(TapGesture().onEnded {
+            Telemetry.shared.send("app_upgrade_prompt_clicked", params: ["surface": "license_panel"])
+        })
     }
 
     // MARK: - Email sign-in
